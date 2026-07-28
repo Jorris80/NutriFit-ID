@@ -1,0 +1,1917 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#059669">
+<title>NutriFit ID</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NutriFit ID">
+<meta name="description" content="Aplikasi hitung kalori, pemindai barcode, resep AI, pemantau detak jantung, dan komunitas kebugaran berbahasa Indonesia.">
+<script src="config.js"></script>
+<style>
+/* ============================ DASAR ============================ */
+:root{
+  --hijau:#059669; --hijau-t:#10b981; --hijau-g:#d1fae5;
+  --biru:#0ea5e9; --oranye:#f59e0b; --merah:#ef4444; --ungu:#8b5cf6;
+  --bg:#f4f7f6; --kartu:#ffffff; --teks:#0f172a; --teks2:#64748b;
+  --garis:#e2e8f0; --radius:16px;
+  --bayang:0 1px 3px rgba(15,23,42,.06), 0 8px 24px rgba(15,23,42,.05);
+}
+html[data-tema="gelap"]{
+  --bg:#0b1220; --kartu:#151d2e; --teks:#e2e8f0; --teks2:#94a3b8;
+  --garis:#243044; --hijau-g:#053b2c;
+  --bayang:0 1px 3px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+body{
+  margin:0; background:var(--bg); color:var(--teks);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  font-size:15px; line-height:1.5; padding-bottom:88px;
+}
+h1,h2,h3,h4{margin:0 0 8px; line-height:1.25}
+h2{font-size:19px} h3{font-size:16px} h4{font-size:14px}
+p{margin:0 0 10px}
+a{color:var(--hijau); text-decoration:none}
+.kecil{font-size:12.5px; color:var(--teks2)}
+.tengah{text-align:center}
+.baris{display:flex; gap:10px; align-items:center}
+.baris.rata{justify-content:space-between}
+.wrap{flex-wrap:wrap}
+.tumbuh{flex:1; min-width:0}
+.sembunyi{display:none !important}
+
+/* ============================ HEADER ============================ */
+header{
+  position:sticky; top:0; z-index:40; background:linear-gradient(135deg,#059669,#0d9488);
+  color:#fff; padding:14px 16px calc(14px + env(safe-area-inset-top)) 16px;
+  padding-top:calc(14px + env(safe-area-inset-top));
+  box-shadow:0 2px 12px rgba(5,150,105,.25);
+}
+header .judul{font-size:18px; font-weight:700; letter-spacing:-.3px}
+header .sub{font-size:12px; opacity:.9}
+.tombol-ikon{
+  width:38px; height:38px; border-radius:12px; border:0; cursor:pointer;
+  background:rgba(255,255,255,.18); color:#fff; font-size:17px;
+  display:flex; align-items:center; justify-content:center;
+}
+.tombol-ikon:active{transform:scale(.94)}
+.lencana-status{
+  display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600;
+  background:rgba(255,255,255,.2); padding:3px 9px; border-radius:99px;
+}
+.titik{width:7px; height:7px; border-radius:50%; background:#4ade80}
+.titik.off{background:#fbbf24}
+.titik.sync{background:#38bdf8; animation:kedip 1s infinite}
+@keyframes kedip{50%{opacity:.3}}
+
+/* ============================ NAVIGASI ============================ */
+nav.tab{
+  position:sticky; top:0; z-index:35; background:var(--kartu);
+  border-bottom:1px solid var(--garis); overflow-x:auto; white-space:nowrap;
+  -webkit-overflow-scrolling:touch; scrollbar-width:none;
+}
+nav.tab::-webkit-scrollbar{display:none}
+nav.tab button{
+  border:0; background:none; padding:12px 14px; font-size:13.5px; font-weight:600;
+  color:var(--teks2); cursor:pointer; border-bottom:3px solid transparent; font-family:inherit;
+}
+nav.tab button.aktif{color:var(--hijau); border-bottom-color:var(--hijau)}
+
+/* nav bawah untuk layar kecil */
+.nav-bawah{
+  position:fixed; bottom:0; left:0; right:0; z-index:45; background:var(--kartu);
+  border-top:1px solid var(--garis); display:flex; justify-content:space-around;
+  padding:6px 4px calc(6px + env(safe-area-inset-bottom));
+}
+.nav-bawah button{
+  border:0; background:none; font-family:inherit; cursor:pointer; color:var(--teks2);
+  font-size:10px; display:flex; flex-direction:column; align-items:center; gap:2px;
+  padding:4px 6px; flex:1;
+}
+.nav-bawah button span.ik{font-size:19px; line-height:1}
+.nav-bawah button.aktif{color:var(--hijau)}
+
+/* ============================ KARTU ============================ */
+main{max-width:900px; margin:0 auto; padding:14px}
+.kartu{
+  background:var(--kartu); border-radius:var(--radius); padding:16px;
+  box-shadow:var(--bayang); margin-bottom:14px; border:1px solid var(--garis);
+}
+.kartu.rapat{padding:12px}
+.grid{display:grid; gap:12px}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+@media(max-width:520px){ .g3{grid-template-columns:repeat(2,1fr)} }
+
+/* ============================ TOMBOL ============================ */
+button.b{
+  border:0; border-radius:12px; padding:11px 16px; font-size:14px; font-weight:600;
+  cursor:pointer; font-family:inherit; background:var(--hijau); color:#fff;
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
+}
+button.b:active{transform:scale(.97)}
+button.b:disabled{opacity:.5; cursor:not-allowed}
+button.b.abu{background:var(--garis); color:var(--teks)}
+button.b.garis{background:transparent; border:1.5px solid var(--garis); color:var(--teks)}
+button.b.merah{background:var(--merah)}
+button.b.biru{background:var(--biru)}
+button.b.ungu{background:var(--ungu)}
+button.b.kecilb{padding:7px 11px; font-size:12.5px; border-radius:9px}
+button.b.penuh{width:100%}
+
+/* ============================ FORM ============================ */
+label.f{display:block; font-size:12.5px; font-weight:600; color:var(--teks2); margin:0 0 5px}
+input,select,textarea{
+  width:100%; padding:10px 12px; border:1.5px solid var(--garis); border-radius:11px;
+  font-size:15px; font-family:inherit; background:var(--bg); color:var(--teks); outline:none;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--hijau)}
+textarea{resize:vertical; min-height:80px}
+.ruas{margin-bottom:12px}
+
+/* ============================ ELEMEN KHUSUS ============================ */
+.cincin{position:relative; width:150px; height:150px; margin:0 auto}
+.cincin svg{transform:rotate(-90deg)}
+.cincin .isi{
+  position:absolute; inset:0; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; text-align:center;
+}
+.cincin .angka{font-size:30px; font-weight:800; letter-spacing:-1px}
+
+.bar{height:8px; background:var(--garis); border-radius:99px; overflow:hidden; margin-top:6px}
+.bar>i{display:block; height:100%; border-radius:99px; background:var(--hijau); transition:width .4s}
+
+.stat{background:var(--bg); border-radius:13px; padding:12px; border:1px solid var(--garis)}
+.stat .nilai{font-size:20px; font-weight:800; letter-spacing:-.5px}
+.stat .label{font-size:11.5px; color:var(--teks2); font-weight:600}
+
+.chip{
+  display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:99px;
+  font-size:11.5px; font-weight:600; background:var(--hijau-g); color:var(--hijau);
+}
+.chip.abu{background:var(--garis); color:var(--teks2)}
+.chip.oranye{background:#fef3c7; color:#b45309}
+.chip.merah{background:#fee2e2; color:#b91c1c}
+.chip.biru{background:#e0f2fe; color:#0369a1}
+
+.item{
+  display:flex; gap:11px; align-items:center; padding:11px 0; border-bottom:1px solid var(--garis);
+}
+.item:last-child{border-bottom:0}
+.item .emo{
+  width:42px; height:42px; border-radius:12px; background:var(--bg); display:flex;
+  align-items:center; justify-content:center; font-size:21px; flex-shrink:0;
+}
+
+.grafik{display:flex; align-items:flex-end; gap:6px; height:130px; padding-top:8px}
+.grafik>div{flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%}
+.grafik .btg{
+  width:100%; background:linear-gradient(180deg,var(--hijau-t),var(--hijau));
+  border-radius:6px 6px 0 0; margin-top:auto; min-height:3px; transition:height .5s;
+}
+.grafik .lbl{font-size:10px; color:var(--teks2)}
+
+#peta{height:320px; border-radius:13px; overflow:hidden; background:var(--bg); border:1px solid var(--garis)}
+#peta.mini{height:180px}
+
+.gelembung{max-width:82%; padding:10px 13px; border-radius:15px; font-size:14px; white-space:pre-wrap}
+.gelembung.saya{background:var(--hijau); color:#fff; margin-left:auto; border-bottom-right-radius:4px}
+.gelembung.ai{background:var(--bg); border:1px solid var(--garis); border-bottom-left-radius:4px}
+
+/* ============================ MODAL ============================ */
+.tirai{
+  position:fixed; inset:0; background:rgba(15,23,42,.55); z-index:60; display:flex;
+  align-items:flex-end; justify-content:center; padding:0; backdrop-filter:blur(2px);
+}
+@media(min-width:640px){ .tirai{align-items:center; padding:20px} }
+.modal{
+  background:var(--kartu); width:100%; max-width:600px; max-height:90vh; overflow-y:auto;
+  border-radius:20px 20px 0 0; padding:18px; padding-bottom:calc(18px + env(safe-area-inset-bottom));
+}
+@media(min-width:640px){ .modal{border-radius:20px} }
+.modal-judul{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px}
+.tutup{border:0; background:var(--bg); width:32px; height:32px; border-radius:10px; font-size:17px; cursor:pointer; color:var(--teks)}
+
+/* ============================ TOAST ============================ */
+#toast{
+  position:fixed; left:50%; transform:translateX(-50%); bottom:100px; z-index:80;
+  display:flex; flex-direction:column; gap:8px; align-items:center; pointer-events:none; width:92%; max-width:420px;
+}
+.toast{
+  background:#0f172a; color:#fff; padding:11px 16px; border-radius:12px; font-size:13.5px;
+  box-shadow:0 8px 24px rgba(0,0,0,.25); animation:naik .25s ease;
+}
+.toast.ok{background:var(--hijau)} .toast.err{background:var(--merah)} .toast.info{background:var(--biru)}
+@keyframes naik{from{opacity:0; transform:translateY(12px)}}
+
+.muat{display:inline-block; width:15px; height:15px; border:2.5px solid rgba(255,255,255,.35); border-top-color:#fff; border-radius:50%; animation:putar .7s linear infinite}
+.muat.hijau{border-color:var(--hijau-g); border-top-color:var(--hijau)}
+@keyframes putar{to{transform:rotate(360deg)}}
+
+.kosong{text-align:center; padding:34px 16px; color:var(--teks2)}
+.kosong .ik{font-size:38px; display:block; margin-bottom:8px; opacity:.6}
+
+@media print{
+  header,nav.tab,.nav-bawah,.tanpa-cetak{display:none !important}
+  body{padding:0; background:#fff}
+  .kartu{box-shadow:none; border:1px solid #ccc; page-break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="baris rata">
+    <div class="tumbuh">
+      <div class="judul">🥗 NutriFit ID</div>
+      <div class="sub" id="hdrSub">Memuat data…</div>
+    </div>
+    <div class="baris" style="gap:7px">
+      <button class="tombol-ikon sembunyi" id="btnPasang" title="Pasang aplikasi">⬇️</button>
+      <button class="tombol-ikon" id="btnTema" title="Ganti tema">🌙</button>
+      <button class="tombol-ikon" id="btnNotif" title="Pengingat">🔔</button>
+      <button class="tombol-ikon" id="btnProfil" title="Profil">👤</button>
+    </div>
+  </div>
+  <div class="baris" style="margin-top:9px; gap:7px">
+    <span class="lencana-status" id="statusKoneksi"><span class="titik"></span><span id="statusTeks">Online</span></span>
+    <span class="lencana-status" id="lencanaStreak">🔥 0 hari</span>
+    <span class="lencana-status" id="lencanaLevel">⭐ Level 1</span>
+  </div>
+</header>
+
+<nav class="tab" id="navAtas"></nav>
+
+<main id="tampilan">
+  <div class="kartu tengah" style="padding:40px">
+    <span class="muat hijau" style="width:26px;height:26px;border-width:3px"></span>
+    <p class="kecil" style="margin-top:12px">Menyiapkan NutriFit ID…</p>
+  </div>
+</main>
+
+<div class="nav-bawah" id="navBawah"></div>
+<div id="toast"></div>
+<div id="modalHost"></div>
+
+<script>
+/* ==================================================================
+   NutriFit ID — Front-end
+   Satu berkas untuk dua mode:
+   - Mode Apps Script : memakai google.script.run
+   - Mode GitHub Pages: memakai fetch ke URL Web App (dari config.js)
+   ================================================================== */
+
+/* ---------- 1. LAPISAN API ---------- */
+var CFG = window.NUTRIFIT_CONFIG || {};
+var MODE = (CFG.gasUrl && CFG.gasUrl.indexOf('http') === 0) ? 'fetch'
+         : (typeof google !== 'undefined' && google.script && google.script.run) ? 'gas'
+         : 'lokal';
+
+function api(aksi, data){
+  data = data || {};
+  if(MODE === 'gas'){
+    return new Promise(function(res, rej){
+      google.script.run
+        .withSuccessHandler(function(t){
+          var r; try{ r = JSON.parse(t); }catch(e){ return rej(new Error('Balasan server tidak valid.')); }
+          r.ok ? res(r.data) : rej(new Error(r.error || 'Gagal'));
+        })
+        .withFailureHandler(function(e){ rej(new Error(e && e.message ? e.message : 'Gagal menghubungi server')); })
+        .apiCall(aksi, data);
+    });
+  }
+  if(MODE === 'fetch'){
+    return fetch(CFG.gasUrl, {
+      method:'POST', redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},   /* hindari preflight CORS */
+      body: JSON.stringify({api:aksi, payload:data})
+    }).then(function(r){ return r.json(); })
+      .then(function(r){ if(!r.ok) throw new Error(r.error||'Gagal'); return r.data; });
+  }
+  return Promise.reject(new Error('Aplikasi belum tersambung ke server. Isi gasUrl pada config.js.'));
+}
+
+/* ---------- 2. PENYIMPANAN LOKAL ---------- */
+var K = {DATA:'nutrifit_data', ANTREAN:'nutrifit_antrean', TEMA:'nutrifit_tema'};
+
+function simpan(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+function baca(k,d){ try{ var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } }
+
+/* ---------- 3. STATUS APLIKASI ---------- */
+var S = null;                       /* seluruh data dari server / cache */
+var tab = 'ringkasan';
+var online = navigator.onLine;
+var sedangSync = false;
+
+var TABS = [
+  {id:'ringkasan',  nama:'Ringkasan',  ik:'📊'},
+  {id:'catat',      nama:'Catat Makan',ik:'🍽️'},
+  {id:'peta',       nama:'Peta Workout',ik:'🗺️'},
+  {id:'barcode',    nama:'Barcode',    ik:'📷'},
+  {id:'resep',      nama:'Resep Sehat',ik:'👨‍🍳'},
+  {id:'wearable',   nama:'Wearable HR',ik:'⌚'},
+  {id:'komunitas',  nama:'Komunitas',  ik:'👥'},
+  {id:'ahligizi',   nama:'Ahli Gizi AI',ik:'💬'},
+  {id:'laporan',    nama:'Kalender & Laporan',ik:'📅'}
+];
+var TAB_BAWAH = ['ringkasan','catat','barcode','resep','laporan'];
+
+/* ---------- 4. UTILITAS ---------- */
+function esc(s){
+  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+/* untuk menaruh string di dalam atribut onclick="fn('...')" */
+function jsq(s){ return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/\n/g,' '); }
+function hariIni(){ var d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+function pad(n){ return (n<10?'0':'')+n; }
+function jamKini(){ var d=new Date(); return pad(d.getHours())+':'+pad(d.getMinutes()); }
+function idBaru(p){ return p+'_'+Date.now().toString(36)+Math.random().toString(36).substr(2,4); }
+function n(v,d){ var x=Number(v); return isNaN(x)?(d||0):x; }
+function rb(x){ return Math.round(n(x)).toLocaleString('id-ID'); }
+function namaHari(tgl){
+  var h=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  return h[new Date(tgl+'T00:00:00').getDay()];
+}
+function tglIndo(tgl){
+  var b=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  var d=new Date(tgl+'T00:00:00');
+  return d.getDate()+' '+b[d.getMonth()]+' '+d.getFullYear();
+}
+function toast(pesan, jenis){
+  var el=document.createElement('div');
+  el.className='toast '+(jenis||'');
+  el.textContent=pesan;
+  document.getElementById('toast').appendChild(el);
+  setTimeout(function(){ el.style.opacity='0'; el.style.transition='opacity .3s'; setTimeout(function(){ el.remove(); }, 320); }, 2800);
+}
+var KATEGORI = {sarapan:'Sarapan', makan_siang:'Makan Siang', makan_malam:'Makan Malam', camilan:'Camilan'};
+var TUJUAN = {turun_bb:'Turunkan Berat Badan', jaga_bb:'Jaga Berat Badan', tambah_otot:'Tambah Massa Otot', hidup_sehat:'Hidup Lebih Sehat'};
+var AKTIVITAS = {sedentari:'Jarang Bergerak', ringan:'Aktivitas Ringan', sedang:'Aktivitas Sedang', berat:'Aktivitas Berat', ekstrem:'Sangat Berat'};
+
+/* ---------- 5. ANTREAN OFFLINE ---------- */
+/**
+ * Semua perubahan data melewati fungsi ini.
+ * Saat online  : langsung dikirim ke server.
+ * Saat offline : disimpan di localStorage, diterapkan ke data lokal,
+ *                lalu dikirim otomatis ketika koneksi kembali.
+ */
+function ubah(aksi, data, terapkanLokal){
+  if(typeof terapkanLokal === 'function') terapkanLokal();
+  simpan(K.DATA, S);
+  render();
+
+  if(online && MODE !== 'lokal'){
+    return api(aksi, data).then(function(hasil){
+      return hasil;
+    }).catch(function(e){
+      antrekan(aksi, data);
+      toast('Disimpan offline: '+e.message, 'info');
+    });
+  }
+  antrekan(aksi, data);
+  return Promise.resolve(null);
+}
+
+function antrekan(aksi, data){
+  var q = baca(K.ANTREAN, []);
+  q.push({id:idBaru('q'), aksi:aksi, data:data, waktu:new Date().toISOString()});
+  simpan(K.ANTREAN, q);
+  perbaruiStatus();
+}
+
+function sinkronAntrean(){
+  var q = baca(K.ANTREAN, []);
+  if(!q.length || !online || sedangSync || MODE === 'lokal') return Promise.resolve();
+  sedangSync = true; perbaruiStatus();
+  return api('sync_batch', {antrean:q}).then(function(r){
+    simpan(K.ANTREAN, []);
+    toast('Sinkronisasi selesai: '+r.diproses+' perubahan terkirim', 'ok');
+    return muatData(true);
+  }).catch(function(e){
+    toast('Sinkronisasi tertunda: '+e.message, 'info');
+  }).then(function(){
+    sedangSync = false; perbaruiStatus();
+  });
+}
+
+function perbaruiStatus(){
+  var q = baca(K.ANTREAN, []).length;
+  var t = document.getElementById('statusTeks');
+  var d = document.querySelector('#statusKoneksi .titik');
+  if(!t) return;
+  if(sedangSync){ t.textContent='Menyinkronkan…'; d.className='titik sync'; }
+  else if(!online){ t.textContent = q ? ('Offline · '+q+' tertunda') : 'Mode Offline'; d.className='titik off'; }
+  else if(q){ t.textContent = q+' tertunda'; d.className='titik off'; }
+  else { t.textContent='Online'; d.className='titik'; }
+}
+
+/* ---------- 6. MUAT DATA ---------- */
+function muatData(diam){
+  var cache = baca(K.DATA, null);
+  if(cache && !S){ S = cache; render(); }
+
+  if(!online || MODE === 'lokal'){
+    if(!S){ gagalMuat('Tidak ada koneksi dan belum ada data tersimpan.'); }
+    return Promise.resolve();
+  }
+  return api('bootstrap', {}).then(function(d){
+    S = d; simpan(K.DATA, d); render();
+    if(!diam) toast('Data termuat', 'ok');
+  }).catch(function(e){
+    if(S){ if(!diam) toast('Memakai data tersimpan: '+e.message, 'info'); }
+    else gagalMuat(e.message);
+  });
+}
+
+function gagalMuat(pesan){
+  document.getElementById('tampilan').innerHTML =
+    '<div class="kartu tengah" style="padding:36px">' +
+      '<div style="font-size:40px">📡</div>' +
+      '<h3 style="margin-top:10px">Belum bisa memuat data</h3>' +
+      '<p class="kecil">'+esc(pesan)+'</p>' +
+      '<button class="b" onclick="muatData()">Coba Lagi</button>' +
+    '</div>';
+}
+
+/* ---------- 7. PERHITUNGAN LOKAL ---------- */
+function catatanTanggal(tgl){
+  return (S.catatanMakan||[]).filter(function(c){ return c.date === tgl; });
+}
+function totalHarian(tgl){
+  var t={kalori:0,protein:0,karbo:0,lemak:0};
+  catatanTanggal(tgl).forEach(function(c){
+    var q=n(c.quantity,1), f=c.foodItem||{};
+    t.kalori+=n(f.calories)*q; t.protein+=n(f.protein)*q;
+    t.karbo+=n(f.carbs)*q; t.lemak+=n(f.fat)*q;
+  });
+  t.kalori=Math.round(t.kalori); t.protein=Math.round(t.protein);
+  t.karbo=Math.round(t.karbo); t.lemak=Math.round(t.lemak);
+  return t;
+}
+function airHari(tgl){ return n((S.air||{})[tgl]); }
+function aktivitasHari(tgl){
+  var a=(S.aktivitas||[]).filter(function(x){ return x.date===tgl; })[0];
+  return a || {date:tgl, steps:0, activeCalories:0, distanceKm:0, sleepHours:0, avgHeartRate:0, maxHeartRate:0};
+}
+function tujuhHari(){
+  var out=[], d=new Date();
+  for(var i=6;i>=0;i--){
+    var x=new Date(d.getTime()-i*86400000);
+    out.push(x.getFullYear()+'-'+pad(x.getMonth()+1)+'-'+pad(x.getDate()));
+  }
+  return out;
+}
+
+/* ---------- 8. RENDER UTAMA ---------- */
+function render(){
+  if(!S) return;
+  var p = S.profil || {};
+  document.getElementById('hdrSub').textContent =
+    (p.name || 'Pengguna') + ' · ' + (TUJUAN[p.dietaryGoal] || 'Hidup Sehat');
+  document.getElementById('lencanaStreak').innerHTML = '🔥 '+n(p.streakDays)+' hari';
+  document.getElementById('lencanaLevel').innerHTML = '⭐ Level '+n(p.userLevel,1);
+  perbaruiStatus();
+
+  document.getElementById('navAtas').innerHTML = TABS.map(function(t){
+    return '<button class="'+(tab===t.id?'aktif':'')+'" onclick="pindah(\''+t.id+'\')">'+t.ik+' '+t.nama+'</button>';
+  }).join('');
+
+  document.getElementById('navBawah').innerHTML = TAB_BAWAH.map(function(id){
+    var t = TABS.filter(function(x){return x.id===id})[0];
+    return '<button class="'+(tab===id?'aktif':'')+'" onclick="pindah(\''+id+'\')">' +
+           '<span class="ik">'+t.ik+'</span>'+t.nama.split(' ')[0]+'</button>';
+  }).join('');
+
+  var f = {
+    ringkasan:viewRingkasan, catat:viewCatat, peta:viewPeta, barcode:viewBarcode,
+    resep:viewResep, wearable:viewWearable, komunitas:viewKomunitas,
+    ahligizi:viewAhliGizi, laporan:viewLaporan
+  }[tab] || viewRingkasan;
+
+  document.getElementById('tampilan').innerHTML = f();
+  if(typeof window['sesudah_'+tab] === 'function') window['sesudah_'+tab]();
+}
+
+function pindah(id){
+  tab = id;
+  render();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/* ================================================================
+   TAB 1 — RINGKASAN
+   ================================================================ */
+function viewRingkasan(){
+  var p=S.profil||{}, tgl=hariIni(), t=totalHarian(tgl);
+  var target=n(p.dailyCalorieTarget,2000);
+  var sisa=target-t.kalori;
+  var persen=Math.min(100, target? (t.kalori/target*100) : 0);
+  var air=airHari(tgl), targetAir=n(p.dailyWaterTargetMl,2500);
+  var akt=aktivitasHari(tgl), targetLangkah=n(p.dailyStepsTarget,8000);
+  var d=p.turunan||{};
+
+  var keliling=2*Math.PI*62;
+  var offset=keliling-(persen/100*keliling);
+
+  var h='';
+
+  /* cincin kalori */
+  h+='<div class="kartu">'+
+      '<div class="baris rata" style="margin-bottom:10px">'+
+        '<h2>Kalori Hari Ini</h2>'+
+        '<span class="chip">'+tglIndo(tgl)+'</span>'+
+      '</div>'+
+      '<div class="cincin">'+
+        '<svg width="150" height="150">'+
+          '<circle cx="75" cy="75" r="62" fill="none" stroke="var(--garis)" stroke-width="13"/>'+
+          '<circle cx="75" cy="75" r="62" fill="none" stroke="'+(sisa<0?'var(--merah)':'var(--hijau)')+'" stroke-width="13" '+
+            'stroke-linecap="round" stroke-dasharray="'+keliling+'" stroke-dashoffset="'+offset+'"/>'+
+        '</svg>'+
+        '<div class="isi">'+
+          '<div class="angka">'+rb(Math.abs(sisa))+'</div>'+
+          '<div class="kecil">'+(sisa<0?'kelebihan':'sisa kkal')+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="grid g3" style="margin-top:14px">'+
+        kartuStat('Terkonsumsi', rb(t.kalori)+' kkal', '')+
+        kartuStat('Target', rb(target)+' kkal','')+
+        kartuStat('Dibakar', rb(akt.activeCalories)+' kkal','')+
+      '</div>'+
+    '</div>';
+
+  /* makro */
+  h+='<div class="kartu"><h3>Makronutrien</h3>'+
+      barMakro('Protein', t.protein, n(p.dailyProteinTarget,100), 'g', 'var(--merah)')+
+      barMakro('Karbohidrat', t.karbo, n(p.dailyCarbsTarget,220), 'g', 'var(--oranye)')+
+      barMakro('Lemak', t.lemak, n(p.dailyFatTarget,55), 'g', 'var(--ungu)')+
+    '</div>';
+
+  /* hidrasi + langkah */
+  h+='<div class="grid g2">'+
+      '<div class="kartu rapat">'+
+        '<div class="baris rata"><h4>💧 Hidrasi</h4><span class="kecil">'+rb(air)+'/'+rb(targetAir)+' ml</span></div>'+
+        '<div class="bar"><i style="width:'+Math.min(100,targetAir?air/targetAir*100:0)+'%; background:var(--biru)"></i></div>'+
+        '<div class="baris" style="margin-top:9px; gap:6px; flex-wrap:wrap">'+
+          '<button class="b kecilb biru" onclick="tambahAir(250)">+250</button>'+
+          '<button class="b kecilb biru" onclick="tambahAir(500)">+500</button>'+
+          '<button class="b kecilb abu" onclick="tambahAir(-250)">−250</button>'+
+        '</div>'+
+      '</div>'+
+      '<div class="kartu rapat">'+
+        '<div class="baris rata"><h4>👟 Langkah</h4><span class="kecil">'+rb(akt.steps)+'/'+rb(targetLangkah)+'</span></div>'+
+        '<div class="bar"><i style="width:'+Math.min(100,targetLangkah?akt.steps/targetLangkah*100:0)+'%; background:var(--oranye)"></i></div>'+
+        '<div style="margin-top:9px">'+
+          '<input type="number" id="inpLangkah" placeholder="Masukkan langkah" value="'+akt.steps+'" style="padding:7px 10px; font-size:13px">'+
+          '<button class="b kecilb penuh" style="margin-top:6px" onclick="simpanLangkah()">Perbarui</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+
+  /* skor kesehatan */
+  var skor = hitungSkor();
+  h+='<div class="kartu">'+
+      '<div class="baris rata"><h3>Skor Kesehatan Harian</h3><span class="chip '+(skor.nilai>=75?'':'oranye')+'">'+skor.nilai+'/100</span></div>'+
+      '<div class="bar" style="height:11px"><i style="width:'+skor.nilai+'%"></i></div>'+
+      '<p class="kecil" style="margin-top:9px">'+esc(skor.pesan)+'</p>'+
+      '<div class="grid g4" style="margin-top:10px">'+
+        skor.rincian.map(function(r){
+          return '<div class="stat"><div class="label">'+esc(r.nama)+'</div><div class="nilai" style="font-size:16px">'+r.poin+'<span class="kecil">/'+r.maks+'</span></div></div>';
+        }).join('')+
+      '</div>'+
+    '</div>';
+
+  /* wawasan AI */
+  h+='<div class="kartu" id="kartuWawasan">'+
+      '<div class="baris rata"><h3>✨ Wawasan AI</h3>'+
+        '<button class="b kecilb" onclick="mintaWawasan()" '+(S.aiAktif?'':'disabled')+'>Analisis</button></div>'+
+      '<div id="isiWawasan"><p class="kecil">'+
+        (S.aiAktif ? 'Tekan Analisis untuk mendapat ulasan singkat tentang pola makan dan aktivitasmu hari ini.'
+                   : 'Fitur AI nonaktif. Isi GEMINI_API_KEY pada Script Properties untuk mengaktifkannya.')+
+      '</p></div>'+
+    '</div>';
+
+  /* ringkas tubuh */
+  h+='<div class="kartu"><h3>Profil Tubuh</h3><div class="grid g4">'+
+      kartuStat('Berat', n(p.weightKg)+' kg','')+
+      kartuStat('Target', n(p.targetWeightKg)+' kg','')+
+      kartuStat('BMI', (d.bmi||'-'),'')+
+      kartuStat('TDEE', rb(d.tdee)+' kkal','')+
+    '</div>'+
+    '<button class="b garis penuh" style="margin-top:11px" onclick="modalProfil()">Ubah Data Diri & Target</button></div>';
+
+  /* pencapaian */
+  var pc = (S.pencapaian||[]);
+  h+='<div class="kartu"><h3>🏅 Pencapaian</h3><div class="grid g4">'+
+      pc.map(function(a){
+        return '<div class="stat" style="opacity:'+(a.isUnlocked?1:.55)+'">'+
+          '<div style="font-size:22px">'+a.icon+'</div>'+
+          '<div class="label" style="margin-top:3px">'+esc(a.title)+'</div>'+
+          '<div class="bar" style="height:5px"><i style="width:'+n(a.progressPercent)+'%"></i></div></div>';
+      }).join('')+
+    '</div></div>';
+
+  /* jadwal hari ini */
+  var jdw=(S.jadwal||[]).filter(function(j){ return j.date===tgl; });
+  h+='<div class="kartu"><div class="baris rata"><h3>🏋️ Jadwal Hari Ini</h3>'+
+      '<button class="b kecilb garis" onclick="pindah(\'laporan\')">Kalender</button></div>'+
+      (jdw.length ? jdw.map(barisJadwal).join('') : '<p class="kecil">Belum ada latihan terjadwal hari ini.</p>')+
+    '</div>';
+
+  return h;
+}
+
+function kartuStat(label, nilai){
+  return '<div class="stat"><div class="label">'+esc(label)+'</div><div class="nilai">'+nilai+'</div></div>';
+}
+function barMakro(nama, kini, target, sat, warna){
+  var pr = target? Math.min(100, kini/target*100) : 0;
+  return '<div style="margin-bottom:11px">'+
+    '<div class="baris rata"><span style="font-size:13px; font-weight:600">'+nama+'</span>'+
+    '<span class="kecil">'+rb(kini)+' / '+rb(target)+' '+sat+'</span></div>'+
+    '<div class="bar"><i style="width:'+pr+'%; background:'+warna+'"></i></div></div>';
+}
+
+function hitungSkor(){
+  var p=S.profil||{}, tgl=hariIni(), t=totalHarian(tgl);
+  var air=airHari(tgl), akt=aktivitasHari(tgl);
+  var r=[];
+  var pKal = n(p.dailyCalorieTarget) ? Math.max(0, 100 - Math.abs(t.kalori-n(p.dailyCalorieTarget))/n(p.dailyCalorieTarget)*100) : 0;
+  r.push({nama:'Kalori', poin:Math.round(pKal*0.3), maks:30});
+  r.push({nama:'Protein', poin:Math.round(Math.min(1, n(p.dailyProteinTarget)? t.protein/n(p.dailyProteinTarget):0)*25), maks:25});
+  r.push({nama:'Hidrasi', poin:Math.round(Math.min(1, n(p.dailyWaterTargetMl)? air/n(p.dailyWaterTargetMl):0)*25), maks:25});
+  r.push({nama:'Langkah', poin:Math.round(Math.min(1, n(p.dailyStepsTarget)? akt.steps/n(p.dailyStepsTarget):0)*20), maks:20});
+  var total=r.reduce(function(a,b){ return a+b.poin; },0);
+  var pesan = total>=85 ? 'Luar biasa. Pola hari ini hampir sempurna, pertahankan ritmenya.'
+            : total>=65 ? 'Sudah bagus. Tinggal rapikan satu-dua aspek yang masih tertinggal.'
+            : total>=40 ? 'Perlu sedikit dorongan. Mulai dari yang paling mudah dulu: minum air.'
+            : 'Hari masih panjang. Catat asupanmu dan mulai bergerak sedikit demi sedikit.';
+  return {nilai:total, rincian:r, pesan:pesan};
+}
+
+function tambahAir(ml){
+  var tgl=hariIni();
+  var baru=Math.max(0, airHari(tgl)+ml);
+  ubah('air_set', {date:tgl, amountMl:baru}, function(){
+    S.air = S.air||{}; S.air[tgl]=baru;
+  });
+}
+
+function simpanLangkah(){
+  var v=n(document.getElementById('inpLangkah').value);
+  var tgl=hariIni(), a=aktivitasHari(tgl);
+  a.steps=v;
+  a.distanceKm=Math.round(v*0.00072*10)/10;
+  a.activeCalories=Math.round(v*0.04);
+  ubah('aktivitas_set', {date:tgl, steps:a.steps, distanceKm:a.distanceKm, activeCalories:a.activeCalories,
+                          sleepHours:a.sleepHours, avgHeartRate:a.avgHeartRate, maxHeartRate:a.maxHeartRate}, function(){
+    S.aktivitas = (S.aktivitas||[]).filter(function(x){ return x.date!==tgl; });
+    S.aktivitas.push(a);
+  });
+  toast('Langkah diperbarui','ok');
+}
+
+function mintaWawasan(){
+  var el=document.getElementById('isiWawasan');
+  el.innerHTML='<p class="kecil"><span class="muat hijau"></span> Menganalisis data harianmu…</p>';
+  api('ai_wawasan', {date:hariIni()}).then(function(r){
+    var w=r.insight||{};
+    el.innerHTML='<h4>'+esc(w.headline||'Ringkasan')+'</h4>'+
+      '<ul class="kecil" style="padding-left:18px; margin:0 0 9px">'+
+        (w.insights||[]).map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+
+      '</ul>'+
+      (w.nextAction?'<div class="chip">Langkah berikutnya: '+esc(w.nextAction)+'</div>':'');
+  }).catch(function(e){
+    el.innerHTML='<p class="kecil" style="color:var(--merah)">'+esc(e.message)+'</p>';
+  });
+}
+
+/* ================================================================
+   TAB 2 — CATAT MAKAN
+   ================================================================ */
+var cariMakanan='';
+function viewCatat(){
+  var tgl=hariIni(), t=totalHarian(tgl), p=S.profil||{};
+  var h='';
+
+  h+='<div class="kartu rapat"><div class="baris rata">'+
+      '<div><div class="kecil">Total hari ini</div><div style="font-size:22px; font-weight:800">'+rb(t.kalori)+' <span class="kecil">kkal</span></div></div>'+
+      '<div class="tengah"><div class="kecil">P / K / L</div><div style="font-weight:700">'+t.protein+' / '+t.karbo+' / '+t.lemak+' g</div></div>'+
+      '<button class="b kecilb" onclick="modalTambahMakanan()">+ Baru</button>'+
+    '</div></div>';
+
+  /* pencarian */
+  h+='<div class="kartu rapat">'+
+      '<input id="inpCari" placeholder="🔍 Cari makanan… (mis. soto, tempe)" value="'+esc(cariMakanan)+'" oninput="cariMakanan=this.value; renderHasilCari()">'+
+      '<div id="hasilCari" style="margin-top:8px"></div>'+
+    '</div>';
+
+  /* daftar per kategori */
+  ['sarapan','makan_siang','makan_malam','camilan'].forEach(function(kat){
+    var list=catatanTanggal(tgl).filter(function(c){ return c.category===kat; });
+    var sub=0; list.forEach(function(c){ sub+=n((c.foodItem||{}).calories)*n(c.quantity,1); });
+    h+='<div class="kartu">'+
+        '<div class="baris rata"><h3>'+KATEGORI[kat]+'</h3>'+
+          '<span class="chip abu">'+rb(sub)+' kkal</span></div>'+
+        (list.length ? list.map(function(c){
+          var f=c.foodItem||{}, q=n(c.quantity,1);
+          return '<div class="item">'+
+            '<div class="emo">'+(f.iconEmoji||'🍽️')+'</div>'+
+            '<div class="tumbuh">'+
+              '<div style="font-weight:600; font-size:14px">'+esc(f.name)+'</div>'+
+              '<div class="kecil">'+esc(f.servingSize||'')+' × '+q+' · '+c.loggedAt+' · P'+Math.round(n(f.protein)*q)+' K'+Math.round(n(f.carbs)*q)+' L'+Math.round(n(f.fat)*q)+'</div>'+
+            '</div>'+
+            '<div class="tengah"><div style="font-weight:700">'+rb(n(f.calories)*q)+'</div><div class="kecil">kkal</div></div>'+
+            '<button class="tutup" onclick="hapusCatatan(\''+jsq(c.id)+'\')">🗑</button>'+
+          '</div>';
+        }).join('') : '<p class="kecil">Belum ada catatan. Cari makanan di atas untuk menambahkannya.</p>')+
+      '</div>';
+  });
+
+  return h;
+}
+function sesudah_catat(){ renderHasilCari(); }
+
+function renderHasilCari(){
+  var el=document.getElementById('hasilCari'); if(!el) return;
+  var q=cariMakanan.trim().toLowerCase();
+  if(!q){ el.innerHTML='<p class="kecil">Ketik untuk mencari dari '+((S.makanan||[]).length)+' makanan tersimpan.</p>'; return; }
+  var hasil=(S.makanan||[]).filter(function(m){
+    return (m.name||'').toLowerCase().indexOf(q)>=0 || (m.brand||'').toLowerCase().indexOf(q)>=0;
+  }).slice(0,12);
+  if(!hasil.length){
+    el.innerHTML='<p class="kecil">Tidak ditemukan. <a href="#" onclick="modalTambahMakanan();return false">Tambah makanan baru</a></p>';
+    return;
+  }
+  el.innerHTML=hasil.map(function(m){
+    return '<div class="item">'+
+      '<div class="emo">'+(m.iconEmoji||'🍽️')+'</div>'+
+      '<div class="tumbuh"><div style="font-weight:600; font-size:14px">'+esc(m.name)+'</div>'+
+      '<div class="kecil">'+esc(m.brand||'')+' · '+esc(m.servingSize||'')+' · '+rb(m.calories)+' kkal</div></div>'+
+      '<button class="b kecilb" onclick="modalPilihPorsi(\''+jsq(m.id)+'\')">Tambah</button>'+
+    '</div>';
+  }).join('');
+}
+
+function modalPilihPorsi(id){
+  var m=(S.makanan||[]).filter(function(x){ return x.id===id; })[0];
+  if(!m) return toast('Makanan tidak ditemukan','err');
+  bukaModal('Tambah ke Catatan',
+    '<div class="item" style="border:0">'+
+      '<div class="emo">'+(m.iconEmoji||'🍽️')+'</div>'+
+      '<div class="tumbuh"><div style="font-weight:700">'+esc(m.name)+'</div>'+
+      '<div class="kecil">'+esc(m.servingSize||'')+' · '+rb(m.calories)+' kkal · P'+n(m.protein)+' K'+n(m.carbs)+' L'+n(m.fat)+'</div></div>'+
+    '</div>'+
+    '<div class="ruas"><label class="f">Kategori</label>'+
+      '<select id="mpKat">'+Object.keys(KATEGORI).map(function(k){
+        return '<option value="'+k+'"'+(k===kategoriOtomatis()?' selected':'')+'>'+KATEGORI[k]+'</option>';
+      }).join('')+'</select></div>'+
+    '<div class="ruas"><label class="f">Jumlah porsi</label>'+
+      '<input type="number" id="mpQty" value="1" min="0.25" step="0.25"></div>'+
+    '<div class="ruas"><label class="f">Jam</label>'+
+      '<input type="time" id="mpJam" value="'+jamKini()+'"></div>'+
+    '<button class="b penuh" onclick="simpanCatatan(\''+jsq(id)+'\')">Simpan Catatan</button>'
+  );
+}
+
+function kategoriOtomatis(){
+  var j=new Date().getHours();
+  if(j<10) return 'sarapan';
+  if(j<15) return 'makan_siang';
+  if(j<21) return 'makan_malam';
+  return 'camilan';
+}
+
+function simpanCatatan(id){
+  var m=(S.makanan||[]).filter(function(x){ return x.id===id; })[0];
+  var kat=document.getElementById('mpKat').value;
+  var qty=n(document.getElementById('mpQty').value,1);
+  var jam=document.getElementById('mpJam').value||jamKini();
+  var rec={id:idBaru('ml'), date:hariIni(), category:kat, quantity:qty, loggedAt:jam, foodItem:m};
+  tutupModal();
+  ubah('catat_makan', rec, function(){
+    S.catatanMakan = S.catatanMakan||[];
+    S.catatanMakan.push(rec);
+    S.profil.userXp = n(S.profil.userXp)+10;
+    S.profil.userLevel = Math.floor(n(S.profil.userXp)/500)+1;
+  });
+  toast(m.name+' dicatat','ok');
+}
+
+function hapusCatatan(id){
+  if(!confirm('Hapus catatan ini?')) return;
+  ubah('catat_makan_hapus', {id:id}, function(){
+    S.catatanMakan=(S.catatanMakan||[]).filter(function(c){ return c.id!==id; });
+  });
+}
+
+function modalTambahMakanan(pre){
+  pre = pre || {};
+  bukaModal('Tambah Makanan Baru',
+    '<div class="ruas"><label class="f">Nama makanan</label><input id="tmNama" value="'+esc(pre.name||'')+'" placeholder="mis. Nasi Uduk Komplit"></div>'+
+    '<div class="grid g2">'+
+      '<div class="ruas"><label class="f">Merek / warung</label><input id="tmMerek" value="'+esc(pre.brand||'')+'"></div>'+
+      '<div class="ruas"><label class="f">Takaran saji</label><input id="tmTakar" value="'+esc(pre.servingSize||'1 Porsi')+'"></div>'+
+    '</div>'+
+    '<div class="grid g4">'+
+      '<div class="ruas"><label class="f">Kalori (kkal)</label><input type="number" id="tmKal" value="'+n(pre.calories)+'"></div>'+
+      '<div class="ruas"><label class="f">Protein (g)</label><input type="number" id="tmPro" value="'+n(pre.protein)+'"></div>'+
+      '<div class="ruas"><label class="f">Karbo (g)</label><input type="number" id="tmKar" value="'+n(pre.carbs)+'"></div>'+
+      '<div class="ruas"><label class="f">Lemak (g)</label><input type="number" id="tmLem" value="'+n(pre.fat)+'"></div>'+
+    '</div>'+
+    '<div class="grid g2">'+
+      '<div class="ruas"><label class="f">Barcode (opsional)</label><input id="tmBar" value="'+esc(pre.barcode||'')+'"></div>'+
+      '<div class="ruas"><label class="f">Emoji</label><input id="tmEmo" value="'+esc(pre.iconEmoji||'🍽️')+'"></div>'+
+    '</div>'+
+    '<button class="b penuh" onclick="simpanMakananBaru()">Simpan ke Basis Data</button>'
+  );
+}
+
+function simpanMakananBaru(){
+  var m={
+    id:idBaru('f'),
+    name:document.getElementById('tmNama').value.trim()||'Makanan Baru',
+    brand:document.getElementById('tmMerek').value.trim(),
+    servingSize:document.getElementById('tmTakar').value.trim()||'1 Porsi',
+    calories:n(document.getElementById('tmKal').value),
+    protein:n(document.getElementById('tmPro').value),
+    carbs:n(document.getElementById('tmKar').value),
+    fat:n(document.getElementById('tmLem').value),
+    barcode:document.getElementById('tmBar').value.trim(),
+    iconEmoji:document.getElementById('tmEmo').value.trim()||'🍽️',
+    category:'Lainnya', fiber:0
+  };
+  tutupModal();
+  ubah('makanan_tambah', m, function(){ S.makanan=S.makanan||[]; S.makanan.unshift(m); });
+  toast('Makanan tersimpan','ok');
+  setTimeout(function(){ modalPilihPorsi(m.id); }, 250);
+}
+
+/* ================================================================
+   TAB 3 — PETA WORKOUT
+   ================================================================ */
+var ruteTerpilih=null, petaObj=null, lapisanRute=null, penandaSaya=null, idWatch=null;
+
+function viewPeta(){
+  var rute=S.rute||[];
+  if(!ruteTerpilih && rute.length) ruteTerpilih=rute[0].id;
+  var r=rute.filter(function(x){ return x.id===ruteTerpilih; })[0] || rute[0];
+
+  var h='<div class="kartu rapat"><div class="baris wrap" style="gap:7px">'+
+      rute.map(function(x){
+        return '<button class="b kecilb '+(x.id===ruteTerpilih?'':'garis')+'" onclick="pilihRute(\''+jsq(x.id)+'\')">'+esc(x.name)+'</button>';
+      }).join('')+
+    '</div></div>';
+
+  if(r){
+    h+='<div class="kartu">'+
+        '<div class="baris rata"><h3>'+esc(r.name)+'</h3><span class="chip '+(r.difficulty==='Tantangan'?'merah':(r.difficulty==='Sedang'?'oranye':''))+'">'+esc(r.difficulty)+'</span></div>'+
+        '<p class="kecil">📍 '+esc(r.locationName)+'</p>'+
+        '<div id="peta"></div>'+
+        '<div class="grid g4" style="margin-top:11px">'+
+          kartuStat('Jarak', n(r.distanceKm)+' km')+
+          kartuStat('Estimasi', n(r.estimatedMinutes)+' mnt')+
+          kartuStat('Kalori', rb(r.caloriesBurned))+
+          kartuStat('Tipe', esc(r.type))+
+        '</div>'+
+        '<p class="kecil" style="margin-top:10px">'+esc(r.description)+'</p>'+
+        '<div class="baris wrap" style="gap:8px">'+
+          '<button class="b" id="btnLacak" onclick="toggleLacak()">▶️ Mulai Lacak GPS</button>'+
+          '<button class="b garis" onclick="jadwalkanRute(\''+jsq(r.id)+'\')">📅 Jadwalkan</button>'+
+        '</div>'+
+        '<div id="infoLacak" class="kecil" style="margin-top:9px"></div>'+
+      '</div>';
+  } else {
+    h+='<div class="kartu kosong"><span class="ik">🗺️</span>Belum ada rute tersimpan.</div>';
+  }
+  return h;
+}
+
+function pilihRute(id){ ruteTerpilih=id; render(); }
+
+function sesudah_peta(){
+  var r=(S.rute||[]).filter(function(x){ return x.id===ruteTerpilih; })[0];
+  if(!r) return;
+  muatLeaflet(function(ok){
+    var el=document.getElementById('peta'); if(!el) return;
+    if(!ok){
+      el.innerHTML='<div class="kosong" style="padding:60px 16px"><span class="ik">🗺️</span>'+
+        'Peta butuh koneksi internet.<br><span class="kecil">Detail rute tetap bisa dibaca di bawah.</span></div>';
+      return;
+    }
+    try{
+      if(petaObj){ petaObj.remove(); petaObj=null; }
+      petaObj=L.map(el,{zoomControl:true}).setView([r.center.lat, r.center.lng], 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19, attribution:'© OpenStreetMap'}).addTo(petaObj);
+      var titik=(r.waypoints||[]).map(function(w){ return Array.isArray(w)?[w[0],w[1]]:[w.lat,w.lng]; });
+      if(titik.length>1){
+        lapisanRute=L.polyline(titik,{color:'#059669', weight:5, opacity:.85}).addTo(petaObj);
+        petaObj.fitBounds(lapisanRute.getBounds(),{padding:[28,28]});
+        L.marker(titik[0]).addTo(petaObj).bindPopup('Start');
+        L.marker(titik[titik.length-1]).addTo(petaObj).bindPopup('Finish');
+      }
+      setTimeout(function(){ petaObj.invalidateSize(); }, 220);
+    }catch(e){
+      el.innerHTML='<div class="kosong">Gagal memuat peta: '+esc(e.message)+'</div>';
+    }
+  });
+}
+
+function muatLeaflet(cb){
+  if(window.L) return cb(true);
+  if(!navigator.onLine) return cb(false);
+  var css=document.createElement('link');
+  css.rel='stylesheet'; css.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+  document.head.appendChild(css);
+  var js=document.createElement('script');
+  js.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+  js.onload=function(){ cb(true); };
+  js.onerror=function(){ cb(false); };
+  document.head.appendChild(js);
+}
+
+var lacakData={jalan:false, jarak:0, mulai:0, terakhir:null};
+function toggleLacak(){
+  var btn=document.getElementById('btnLacak');
+  if(lacakData.jalan){
+    if(idWatch!=null) navigator.geolocation.clearWatch(idWatch);
+    idWatch=null; lacakData.jalan=false;
+    btn.textContent='▶️ Mulai Lacak GPS';
+    var menit=Math.round((Date.now()-lacakData.mulai)/60000);
+    toast('Sesi selesai: '+lacakData.jarak.toFixed(2)+' km dalam '+menit+' menit','ok');
+    return;
+  }
+  if(!navigator.geolocation) return toast('Perangkat tidak mendukung GPS','err');
+  lacakData={jalan:true, jarak:0, mulai:Date.now(), terakhir:null};
+  btn.textContent='⏹ Hentikan';
+  document.getElementById('infoLacak').textContent='Mencari sinyal GPS…';
+  idWatch=navigator.geolocation.watchPosition(function(pos){
+    var la=pos.coords.latitude, ln=pos.coords.longitude;
+    if(lacakData.terakhir) lacakData.jarak += jarakKm(lacakData.terakhir[0], lacakData.terakhir[1], la, ln);
+    lacakData.terakhir=[la,ln];
+    var menit=(Date.now()-lacakData.mulai)/60000;
+    var kal=Math.round(lacakData.jarak*n(S.profil.weightKg,70)*1.036);
+    document.getElementById('infoLacak').innerHTML =
+      '🛰️ '+lacakData.jarak.toFixed(2)+' km · '+menit.toFixed(1)+' menit · ~'+kal+' kkal';
+    if(petaObj && window.L){
+      if(!penandaSaya) penandaSaya=L.circleMarker([la,ln],{radius:8, color:'#0ea5e9', fillColor:'#0ea5e9', fillOpacity:.85}).addTo(petaObj);
+      else penandaSaya.setLatLng([la,ln]);
+      petaObj.panTo([la,ln]);
+    }
+  }, function(e){
+    document.getElementById('infoLacak').textContent='GPS gagal: '+e.message;
+  }, {enableHighAccuracy:true, timeout:15000, maximumAge:3000});
+}
+
+function jarakKm(a1,b1,a2,b2){
+  var R=6371, dLat=(a2-a1)*Math.PI/180, dLon=(b2-b1)*Math.PI/180;
+  var x=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(a1*Math.PI/180)*Math.cos(a2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+  return R*2*Math.atan2(Math.sqrt(x), Math.sqrt(1-x));
+}
+
+function jadwalkanRute(id){
+  var r=(S.rute||[]).filter(function(x){ return x.id===id; })[0];
+  if(!r) return;
+  modalJadwal({
+    title:r.name, type: r.type==='Bersepeda'?'Bersepeda':(r.type==='Lari'?'Lari/Jogging':'Yoga & Stretching'),
+    durationMinutes:r.estimatedMinutes, targetCalories:r.caloriesBurned, notes:r.locationName
+  });
+}
+
+/* ================================================================
+   TAB 4 — BARCODE & PINDAI LABEL
+   ================================================================ */
+function viewBarcode(){
+  return '<div class="kartu">'+
+      '<h3>📷 Pindai Barcode Produk</h3>'+
+      '<p class="kecil">Arahkan kamera ke barcode kemasan. Bila kamera tidak tersedia, ketik angka barcodenya secara manual.</p>'+
+      '<video id="vidBar" playsinline muted style="width:100%; border-radius:13px; background:#000; display:none; max-height:280px; object-fit:cover"></video>'+
+      '<div class="baris wrap" style="gap:8px; margin-top:10px">'+
+        '<button class="b" id="btnKamera" onclick="mulaiKamera()">Buka Kamera</button>'+
+        '<button class="b garis" onclick="hentikanKamera()">Tutup Kamera</button>'+
+      '</div>'+
+      '<div class="ruas" style="margin-top:14px"><label class="f">Nomor barcode</label>'+
+        '<div class="baris"><input id="inpBarcode" placeholder="mis. 8998009010118" inputmode="numeric">'+
+        '<button class="b" onclick="cariBarcode()">Cari</button></div></div>'+
+      '<div id="hasilBarcode"></div>'+
+    '</div>'+
+    '<div class="kartu">'+
+      '<h3>🔍 Pindai Label Gizi (AI)</h3>'+
+      '<p class="kecil">Foto tabel "Informasi Nilai Gizi" pada kemasan, AI akan membaca angkanya untukmu.</p>'+
+      '<div class="baris wrap" style="gap:8px">'+
+        '<label class="b '+(S.aiAktif?'':'abu')+'" style="cursor:pointer">📸 Ambil Foto'+
+          '<input type="file" accept="image/*" capture="environment" style="display:none" onchange="pindaiLabel(this,\'label\')"></label>'+
+        '<label class="b garis" style="cursor:pointer">🖼️ Dari Galeri'+
+          '<input type="file" accept="image/*" style="display:none" onchange="pindaiLabel(this,\'label\')"></label>'+
+      '</div>'+
+      '<h3 style="margin-top:18px">🍛 Kenali Makanan dari Foto (AI)</h3>'+
+      '<p class="kecil">Foto piring makananmu, AI memperkirakan kandungan gizinya.</p>'+
+      '<div class="baris wrap" style="gap:8px">'+
+        '<label class="b ungu" style="cursor:pointer">📸 Foto Makanan'+
+          '<input type="file" accept="image/*" capture="environment" style="display:none" onchange="pindaiLabel(this,\'makanan\')"></label>'+
+        '<label class="b garis" style="cursor:pointer">🖼️ Dari Galeri'+
+          '<input type="file" accept="image/*" style="display:none" onchange="pindaiLabel(this,\'makanan\')"></label>'+
+      '</div>'+
+      '<div id="hasilFoto" style="margin-top:12px"></div>'+
+      (S.aiAktif?'':'<p class="kecil" style="color:var(--oranye); margin-top:10px">Fitur AI nonaktif — isi GEMINI_API_KEY di Script Properties.</p>')+
+    '</div>';
+}
+
+var aliranKamera=null, detektor=null, timerScan=null;
+function mulaiKamera(){
+  var v=document.getElementById('vidBar');
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}).then(function(st){
+    aliranKamera=st; v.srcObject=st; v.style.display='block'; v.play();
+    if('BarcodeDetector' in window){
+      detektor=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128']});
+      timerScan=setInterval(function(){
+        detektor.detect(v).then(function(kode){
+          if(kode && kode.length){
+            document.getElementById('inpBarcode').value=kode[0].rawValue;
+            hentikanKamera();
+            cariBarcode();
+          }
+        }).catch(function(){});
+      }, 700);
+    } else {
+      toast('Deteksi otomatis tidak didukung. Ketik barcode manual.','info');
+    }
+  }).catch(function(e){
+    toast('Kamera tidak dapat dibuka: '+e.message,'err');
+  });
+}
+function hentikanKamera(){
+  if(timerScan){ clearInterval(timerScan); timerScan=null; }
+  if(aliranKamera){ aliranKamera.getTracks().forEach(function(t){ t.stop(); }); aliranKamera=null; }
+  var v=document.getElementById('vidBar');
+  if(v){ v.style.display='none'; v.srcObject=null; }
+}
+
+function cariBarcode(){
+  var kode=(document.getElementById('inpBarcode').value||'').trim();
+  if(!kode) return toast('Isi nomor barcode dulu','err');
+  var el=document.getElementById('hasilBarcode');
+
+  var lokal=(S.makanan||[]).filter(function(m){ return String(m.barcode)===kode; })[0];
+  if(lokal){ el.innerHTML=kartuHasilMakanan(lokal,'basis data lokal'); return; }
+  if(!online) { el.innerHTML='<p class="kecil">Tidak ada di data offline. Sambungkan internet untuk mencari di basis data global, atau <a href="#" onclick="modalTambahMakanan({barcode:\''+jsq(kode)+'\'});return false">tambah manual</a>.</p>'; return; }
+
+  el.innerHTML='<p class="kecil"><span class="muat hijau"></span> Mencari produk…</p>';
+  api('barcode_cari', {barcode:kode}).then(function(r){
+    if(!r.makanan){
+      el.innerHTML='<p class="kecil">Produk tidak ditemukan. <a href="#" onclick="modalTambahMakanan({barcode:\''+jsq(kode)+'\'});return false">Tambah manual</a></p>';
+      return;
+    }
+    if(r.sumber!=='lokal'){ S.makanan=S.makanan||[]; S.makanan.unshift(r.makanan); simpan(K.DATA,S); }
+    el.innerHTML=kartuHasilMakanan(r.makanan, r.sumber==='lokal'?'basis data lokal':'Open Food Facts');
+  }).catch(function(e){
+    el.innerHTML='<p class="kecil" style="color:var(--merah)">'+esc(e.message)+'</p>';
+  });
+}
+
+function kartuHasilMakanan(m, sumber){
+  return '<div class="kartu rapat" style="margin-top:11px">'+
+    '<div class="baris rata"><h4>'+esc(m.name)+'</h4><span class="chip abu">'+esc(sumber)+'</span></div>'+
+    '<p class="kecil">'+esc(m.brand||'')+' · '+esc(m.servingSize||'')+'</p>'+
+    '<div class="grid g4">'+
+      kartuStat('Kalori', rb(m.calories))+kartuStat('Protein', n(m.protein)+' g')+
+      kartuStat('Karbo', n(m.carbs)+' g')+kartuStat('Lemak', n(m.fat)+' g')+
+    '</div>'+
+    '<button class="b penuh" style="margin-top:10px" onclick="modalPilihPorsi(\''+jsq(m.id)+'\')">Catat Sekarang</button>'+
+  '</div>';
+}
+
+function pindaiLabel(input, jenis){
+  var file=input.files && input.files[0];
+  input.value='';
+  if(!file) return;
+  if(!S.aiAktif) return toast('Fitur AI belum aktif','err');
+  if(!online) return toast('Pindai AI butuh koneksi internet','err');
+
+  var el=document.getElementById('hasilFoto');
+  el.innerHTML='<p class="kecil"><span class="muat hijau"></span> Mengunggah & menganalisis foto…</p>';
+
+  kecilkanGambar(file, 1024, function(b64){
+    var aksi = (jenis==='label') ? 'ai_scan_label' : 'ai_analisis_makanan';
+    api(aksi, {imageBase64:b64, mimeType:'image/jpeg'}).then(function(r){
+      var f=r.food||{};
+      if(f.savedId){ f.id=f.savedId; S.makanan=S.makanan||[]; S.makanan.unshift(f); simpan(K.DATA,S); }
+      el.innerHTML=kartuHasilMakanan(f, 'hasil AI'+(f.confidence?(' · keyakinan '+f.confidence):''));
+    }).catch(function(e){
+      el.innerHTML='<p class="kecil" style="color:var(--merah)">'+esc(e.message)+'</p>';
+    });
+  });
+}
+
+/** Kecilkan gambar di sisi klien agar hemat kuota dan cepat. */
+function kecilkanGambar(file, maksSisi, cb){
+  var fr=new FileReader();
+  fr.onload=function(){
+    var img=new Image();
+    img.onload=function(){
+      var s=Math.min(1, maksSisi/Math.max(img.width, img.height));
+      var c=document.createElement('canvas');
+      c.width=Math.round(img.width*s); c.height=Math.round(img.height*s);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      cb(c.toDataURL('image/jpeg',0.82).split(',')[1]);
+    };
+    img.src=fr.result;
+  };
+  fr.readAsDataURL(file);
+}
+
+/* ================================================================
+   TAB 5 — RESEP SEHAT
+   ================================================================ */
+function viewResep(){
+  var p=S.profil||{}, t=totalHarian(hariIni());
+  var sisa=Math.max(0, n(p.dailyCalorieTarget)-t.kalori);
+
+  var h='<div class="kartu">'+
+      '<h3>👨‍🍳 Saran Resep AI</h3>'+
+      '<p class="kecil">Sisa kalori hari ini: <b>'+rb(sisa)+' kkal</b>. AI akan menyusun resep yang pas dengan sisa itu.</p>'+
+      '<div class="ruas"><label class="f">Bahan yang tersedia di dapur</label>'+
+        '<input id="rsBahan" placeholder="ayam, tempe, telur, bayam"></div>'+
+      '<div class="ruas"><label class="f">Preferensi</label>'+
+        '<select id="rsPref">'+
+          '<option>Sehat Seimbang</option><option>Tinggi Protein</option><option>Rendah Karbo</option>'+
+          '<option>Vegetarian</option><option>Bebas Santan</option><option>Hemat Biaya</option>'+
+        '</select></div>'+
+      '<button class="b penuh" onclick="mintaResep()" '+(S.aiAktif?'':'disabled')+'>✨ Buatkan Resep</button>'+
+      '<div class="baris wrap" style="gap:8px; margin-top:9px">'+
+        '<button class="b garis tumbuh" onclick="modalMealPlanner()" '+(S.aiAktif?'':'disabled')+'>📋 Rencana Menu</button>'+
+        '<button class="b garis tumbuh" onclick="modalBelanja()" '+(S.aiAktif?'':'disabled')+'>🛒 Daftar Belanja</button>'+
+      '</div>'+
+      '<div id="hasilResep"></div>'+
+    '</div>';
+
+  h+=(S.resep||[]).map(kartuResep).join('') ||
+     '<div class="kartu kosong"><span class="ik">🍳</span>Belum ada resep tersimpan.</div>';
+  return h;
+}
+
+function kartuResep(r){
+  return '<div class="kartu">'+
+    '<div class="baris rata"><h3>'+esc(r.title)+'</h3>'+
+      '<span class="chip '+(r.difficulty==='Sukar'?'merah':(r.difficulty==='Sedang'?'oranye':''))+'">'+esc(r.difficulty||'Mudah')+'</span></div>'+
+    '<p class="kecil">'+esc(r.description||'')+'</p>'+
+    '<div class="grid g4">'+
+      kartuStat('Kalori', rb(r.calories))+kartuStat('Protein', n(r.protein)+' g')+
+      kartuStat('Waktu', n(r.prepTimeMinutes)+' mnt')+kartuStat('Karbo', n(r.carbs)+' g')+
+    '</div>'+
+    '<div class="baris wrap" style="gap:5px; margin-top:9px">'+
+      (r.tags||[]).map(function(t){ return '<span class="chip abu">'+esc(t)+'</span>'; }).join('')+
+    '</div>'+
+    '<details style="margin-top:10px"><summary style="cursor:pointer; font-weight:600; font-size:14px">Bahan & Cara Membuat</summary>'+
+      '<h4 style="margin-top:10px">Bahan</h4><ul class="kecil" style="padding-left:18px">'+
+        (r.ingredients||[]).map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ul>'+
+      '<h4>Langkah</h4><ol class="kecil" style="padding-left:18px">'+
+        (r.instructions||[]).map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ol>'+
+    '</details>'+
+    '<div class="baris wrap" style="gap:8px; margin-top:10px">'+
+      '<button class="b kecilb" onclick="catatResep(\''+jsq(r.id)+'\')">Catat sebagai Makan</button>'+
+      '<button class="b kecilb garis" onclick="hapusResep(\''+jsq(r.id)+'\')">Hapus</button>'+
+    '</div>'+
+  '</div>';
+}
+
+function mintaResep(){
+  var el=document.getElementById('hasilResep');
+  var p=S.profil||{}, t=totalHarian(hariIni());
+  el.innerHTML='<p class="kecil" style="margin-top:10px"><span class="muat hijau"></span> AI sedang meracik resep…</p>';
+  api('ai_resep', {
+    remainingCalories:Math.max(200, n(p.dailyCalorieTarget)-t.kalori),
+    targetProtein:Math.max(10, n(p.dailyProteinTarget)-t.protein),
+    ingredients:document.getElementById('rsBahan').value,
+    dietaryPreference:document.getElementById('rsPref').value
+  }).then(function(){
+    el.innerHTML='<p class="kecil" style="color:var(--hijau)">Resep baru berhasil dibuat dan disimpan.</p>';
+    return muatData(true);
+  }).catch(function(e){
+    el.innerHTML='<p class="kecil" style="color:var(--merah)">'+esc(e.message)+'</p>';
+  });
+}
+
+function catatResep(id){
+  var r=(S.resep||[]).filter(function(x){ return x.id===id; })[0];
+  if(!r) return;
+  var m={id:idBaru('f'), name:r.title, brand:'Resep', servingSize:'1 Porsi',
+    calories:n(r.calories), protein:n(r.protein), carbs:n(r.carbs), fat:n(r.fat),
+    fiber:0, iconEmoji:'🍲', category:'Resep', barcode:''};
+  ubah('makanan_tambah', m, function(){ S.makanan=S.makanan||[]; S.makanan.unshift(m); });
+  setTimeout(function(){ modalPilihPorsi(m.id); }, 200);
+}
+
+function hapusResep(id){
+  if(!confirm('Hapus resep ini?')) return;
+  ubah('resep_hapus', {id:id}, function(){ S.resep=(S.resep||[]).filter(function(x){ return x.id!==id; }); });
+}
+
+function modalMealPlanner(){
+  bukaModal('📋 Rencana Menu Mingguan',
+    '<div class="ruas"><label class="f">Jumlah hari</label>'+
+      '<select id="mpHari"><option value="3">3 hari</option><option value="5">5 hari</option><option value="7">7 hari</option></select></div>'+
+    '<div class="ruas"><label class="f">Pantangan / catatan</label><input id="mpPantang" placeholder="mis. tidak makan seafood"></div>'+
+    '<button class="b penuh" onclick="buatRencana()">Susun Rencana</button>'+
+    '<div id="isiRencana" style="margin-top:12px"></div>'
+  );
+}
+
+var rencanaTerakhir=null;
+function buatRencana(){
+  var el=document.getElementById('isiRencana');
+  el.innerHTML='<p class="kecil"><span class="muat hijau"></span> Menyusun rencana…</p>';
+  api('ai_meal_planner', {days:n(document.getElementById('mpHari').value,3), restrictions:document.getElementById('mpPantang').value})
+  .then(function(r){
+    rencanaTerakhir=r.plan||[];
+    el.innerHTML=rencanaTerakhir.map(function(d){
+      return '<div class="kartu rapat"><div class="baris rata"><h4>'+esc(d.dayName)+'</h4>'+
+        '<span class="chip">'+rb(d.totalCalories)+' kkal · '+n(d.totalProteinGrams)+' g protein</span></div>'+
+        (d.meals||[]).map(function(m){
+          return '<div class="item"><div class="emo">'+(m.category==='sarapan'?'🌅':m.category==='makan_siang'?'☀️':m.category==='makan_malam'?'🌙':'🍎')+'</div>'+
+            '<div class="tumbuh"><div style="font-weight:600; font-size:13.5px">'+esc(m.mealName)+'</div>'+
+            '<div class="kecil">'+esc(KATEGORI[m.category]||m.category)+' · '+rb(m.calories)+' kkal · '+n(m.proteinGrams)+' g protein</div></div></div>';
+        }).join('')+'</div>';
+    }).join('') + '<button class="b penuh" style="margin-top:8px" onclick="modalBelanja()">🛒 Buat Daftar Belanja dari Rencana Ini</button>';
+  }).catch(function(e){
+    el.innerHTML='<p class="kecil" style="color:var(--merah)">'+esc(e.message)+'</p>';
+  });
+}
+
+function modalBelanja(){
+  bukaModal('🛒 Daftar Belanja',
+    '<p class="kecil">Dibuat dari rencana menu terakhir. Bila belum ada rencana, AI akan memakai target harianmu.</p>'+
+    '<button class="b penuh" onclick="buatBelanja()">Susun Daftar</button>'+
+    '<div id="isiBelanja" style="margin-top:12px"></div>'
+  );
+}
+
+function buatBelanja(){
+  var el=document.getElementById('isiBelanja');
+  el.innerHTML='<p class="kecil"><span class="muat hijau"></span> Menyusun daftar belanja…</p>';
+  api('ai_daftar_belanja', {plan:rencanaTerakhir||[]}).then(function(r){
+    var total=0;
+    var html=(r.groceries||[]).map(function(g){
+      return '<div class="kartu rapat"><h4>'+esc(g.category)+'</h4>'+
+        (g.items||[]).map(function(it){
+          total+=n(it.estimatedPriceIdr);
+          return '<div class="item"><div class="tumbuh"><div style="font-size:14px">'+esc(it.name)+'</div>'+
+            '<div class="kecil">'+esc(it.quantity||'')+'</div></div>'+
+            '<div class="kecil">Rp '+rb(it.estimatedPriceIdr)+'</div></div>';
+        }).join('')+'</div>';
+    }).join('');
+    el.innerHTML=html+'<div class="kartu rapat"><div class="baris rata"><b>Perkiraan Total</b><b>Rp '+rb(total)+'</b></div></div>';
+  }).catch(function(e){
+    el.innerHTML='<p class="kecil" style="color:var(--merah)">'+esc(e.message)+'</p>';
+  });
+}
+
+/* ================================================================
+   TAB 6 — WEARABLE & DETAK JANTUNG
+   ================================================================ */
+var bpmKini=74, timerBpm=null, riwayatBpm=[];
+
+function viewWearable(){
+  var p=S.profil||{}, akt=aktivitasHari(hariIni());
+  var hrMaks=220-n(p.age,28);
+  var zona=zonaDetak(bpmKini, hrMaks);
+
+  var h='<div class="kartu tengah">'+
+      '<h3>Detak Jantung</h3>'+
+      '<div style="font-size:52px; font-weight:800; color:var(--merah); letter-spacing:-2px">'+bpmKini+'</div>'+
+      '<div class="kecil">BPM · '+zona.nama+'</div>'+
+      '<div class="bar" style="height:11px; margin-top:12px"><i style="width:'+Math.min(100,bpmKini/hrMaks*100)+'%; background:linear-gradient(90deg,#22c55e,#f59e0b,#ef4444)"></i></div>'+
+      '<p class="kecil" style="margin-top:8px">Detak jantung maksimum perkiraan: '+hrMaks+' BPM (rumus 220 − usia)</p>'+
+      '<div class="baris wrap" style="gap:8px; justify-content:center">'+
+        '<button class="b" id="btnSimulasi" onclick="toggleSimulasi()">▶️ Mulai Pantau</button>'+
+        '<button class="b garis" onclick="modalCatatHr()">✍️ Catat Manual</button>'+
+      '</div>'+
+    '</div>';
+
+  /* zona latihan */
+  h+='<div class="kartu"><h3>Zona Latihan</h3>'+
+    [{n:'Pemanasan',a:50,b:60,w:'var(--biru)'},{n:'Pembakaran Lemak',a:60,b:70,w:'var(--hijau)'},
+     {n:'Kardio / Aerobik',a:70,b:85,w:'var(--oranye)'},{n:'Puncak / Anaerobik',a:85,b:100,w:'var(--merah)'}]
+    .map(function(z){
+      var lo=Math.round(hrMaks*z.a/100), hi=Math.round(hrMaks*z.b/100);
+      var aktif=(bpmKini>=lo && bpmKini<hi);
+      return '<div class="item" style="'+(aktif?'background:var(--hijau-g); border-radius:10px; padding-left:8px':'')+'">'+
+        '<div style="width:5px; height:34px; border-radius:3px; background:'+z.w+'"></div>'+
+        '<div class="tumbuh"><div style="font-weight:600; font-size:14px">'+z.n+'</div>'+
+        '<div class="kecil">'+lo+' – '+hi+' BPM</div></div>'+
+        (aktif?'<span class="chip">Sekarang</span>':'')+'</div>';
+    }).join('')+'</div>';
+
+  /* aktivitas */
+  h+='<div class="kartu"><h3>Aktivitas Hari Ini</h3><div class="grid g4">'+
+      kartuStat('Langkah', rb(akt.steps))+
+      kartuStat('Jarak', n(akt.distanceKm)+' km')+
+      kartuStat('Kalori Aktif', rb(akt.activeCalories))+
+      kartuStat('Tidur', n(akt.sleepHours)+' jam')+
+    '</div>'+
+    '<button class="b garis penuh" style="margin-top:11px" onclick="modalAktivitas()">Perbarui Data Aktivitas</button></div>';
+
+  /* perangkat */
+  h+='<div class="kartu"><h3>Perangkat Tersambung</h3>'+
+    (S.perangkat||[]).map(function(d){
+      return '<div class="item"><div class="emo">⌚</div>'+
+        '<div class="tumbuh"><div style="font-weight:600; font-size:14px">'+esc(d.name)+'</div>'+
+        '<div class="kecil">'+esc(d.brand)+' · baterai '+n(d.batteryLevel)+'%</div></div>'+
+        '<span class="chip '+(d.connected?'':'abu')+'">'+(d.connected?'Terhubung':'Terputus')+'</span></div>';
+    }).join('')+
+    '<p class="kecil" style="margin-top:9px">Sinkronisasi otomatis dengan perangkat memerlukan aplikasi resmi masing-masing merek. Di sini data dapat dimasukkan manual atau lewat simulasi pemantauan.</p></div>';
+
+  return h;
+}
+
+function zonaDetak(bpm, maks){
+  var p=bpm/maks*100;
+  if(p<60) return {nama:'Istirahat / Pemanasan'};
+  if(p<70) return {nama:'Pembakaran Lemak'};
+  if(p<85) return {nama:'Kardio'};
+  return {nama:'Zona Puncak'};
+}
+
+function toggleSimulasi(){
+  var b=document.getElementById('btnSimulasi');
+  if(timerBpm){
+    clearInterval(timerBpm); timerBpm=null; b.textContent='▶️ Mulai Pantau';
+    if(riwayatBpm.length){
+      var rata=Math.round(riwayatBpm.reduce(function(a,c){return a+c},0)/riwayatBpm.length);
+      var maks=Math.max.apply(null, riwayatBpm);
+      var tgl=hariIni(), a=aktivitasHari(tgl);
+      a.avgHeartRate=rata; a.maxHeartRate=maks;
+      ubah('aktivitas_set', {date:tgl, steps:a.steps, activeCalories:a.activeCalories, distanceKm:a.distanceKm,
+        sleepHours:a.sleepHours, avgHeartRate:rata, maxHeartRate:maks}, function(){
+        S.aktivitas=(S.aktivitas||[]).filter(function(x){ return x.date!==tgl; }); S.aktivitas.push(a);
+      });
+      toast('Tersimpan: rata-rata '+rata+' BPM, puncak '+maks+' BPM','ok');
+    }
+    return;
+  }
+  riwayatBpm=[];
+  b.textContent='⏹ Hentikan';
+  timerBpm=setInterval(function(){
+    bpmKini=Math.max(58, Math.min(178, bpmKini+Math.round((Math.random()-0.45)*9)));
+    riwayatBpm.push(bpmKini);
+    if(tab==='wearable') render();
+  }, 1600);
+}
+
+function modalCatatHr(){
+  bukaModal('Catat Detak Jantung',
+    '<div class="ruas"><label class="f">Detak jantung (BPM)</label><input type="number" id="hrNilai" value="'+bpmKini+'"></div>'+
+    '<button class="b penuh" onclick="simpanHr()">Simpan</button>'
+  );
+}
+function simpanHr(){
+  bpmKini=n(document.getElementById('hrNilai').value,74);
+  var tgl=hariIni(), a=aktivitasHari(tgl);
+  a.avgHeartRate=bpmKini;
+  if(bpmKini>n(a.maxHeartRate)) a.maxHeartRate=bpmKini;
+  tutupModal();
+  ubah('aktivitas_set', {date:tgl, steps:a.steps, activeCalories:a.activeCalories, distanceKm:a.distanceKm,
+    sleepHours:a.sleepHours, avgHeartRate:a.avgHeartRate, maxHeartRate:a.maxHeartRate}, function(){
+    S.aktivitas=(S.aktivitas||[]).filter(function(x){ return x.date!==tgl; }); S.aktivitas.push(a);
+  });
+}
+
+function modalAktivitas(){
+  var a=aktivitasHari(hariIni());
+  bukaModal('Perbarui Aktivitas Hari Ini',
+    '<div class="grid g2">'+
+      '<div class="ruas"><label class="f">Langkah</label><input type="number" id="akLangkah" value="'+n(a.steps)+'"></div>'+
+      '<div class="ruas"><label class="f">Jarak (km)</label><input type="number" step="0.1" id="akJarak" value="'+n(a.distanceKm)+'"></div>'+
+      '<div class="ruas"><label class="f">Kalori aktif</label><input type="number" id="akKal" value="'+n(a.activeCalories)+'"></div>'+
+      '<div class="ruas"><label class="f">Tidur (jam)</label><input type="number" step="0.1" id="akTidur" value="'+n(a.sleepHours)+'"></div>'+
+    '</div>'+
+    '<button class="b penuh" onclick="simpanAktivitas()">Simpan</button>'
+  );
+}
+function simpanAktivitas(){
+  var tgl=hariIni(), a=aktivitasHari(tgl);
+  a.steps=n(document.getElementById('akLangkah').value);
+  a.distanceKm=n(document.getElementById('akJarak').value);
+  a.activeCalories=n(document.getElementById('akKal').value);
+  a.sleepHours=n(document.getElementById('akTidur').value);
+  tutupModal();
+  ubah('aktivitas_set', {date:tgl, steps:a.steps, distanceKm:a.distanceKm, activeCalories:a.activeCalories,
+    sleepHours:a.sleepHours, avgHeartRate:a.avgHeartRate, maxHeartRate:a.maxHeartRate}, function(){
+    S.aktivitas=(S.aktivitas||[]).filter(function(x){ return x.date!==tgl; }); S.aktivitas.push(a);
+  });
+  toast('Aktivitas diperbarui','ok');
+}
+
+/* ================================================================
+   TAB 7 — KOMUNITAS & TANTANGAN
+   ================================================================ */
+function viewKomunitas(){
+  var h='<div class="kartu">'+
+      '<h3>🏆 Tantangan Kebugaran</h3>'+
+      (S.tantangan||[]).map(function(c){
+        return '<div class="item">'+
+          '<div class="emo">'+c.icon+'</div>'+
+          '<div class="tumbuh">'+
+            '<div style="font-weight:600; font-size:14px">'+esc(c.title)+'</div>'+
+            '<div class="kecil">'+esc(c.description)+'</div>'+
+            '<div class="kecil" style="margin-top:3px">👥 '+rb(c.participantsCount)+' peserta · '+n(c.durationDays)+' hari · +'+n(c.rewardPoints)+' poin</div>'+
+            (c.joined?'<div class="bar" style="margin-top:5px"><i style="width:'+n(c.progressPercent)+'%"></i></div>':'')+
+          '</div>'+
+          '<button class="b kecilb '+(c.joined?'abu':'')+'" onclick="ikutTantangan(\''+jsq(c.id)+'\')">'+(c.joined?'Batal':'Ikut')+'</button>'+
+        '</div>';
+      }).join('')+
+    '</div>';
+
+  h+='<div class="kartu">'+
+      '<h3>💬 Bagikan Progres</h3>'+
+      '<textarea id="kmIsi" placeholder="Ceritakan progresmu hari ini…"></textarea>'+
+      '<div class="baris wrap" style="gap:8px; margin-top:8px">'+
+        '<button class="b" onclick="kirimPost(false)">Kirim</button>'+
+        '<button class="b garis" onclick="kirimPost(true)">Kirim + Lampirkan Ringkasan Hari Ini</button>'+
+      '</div>'+
+    '</div>';
+
+  h+=(S.komunitas||[]).slice().reverse().map(function(p){
+    return '<div class="kartu">'+
+      '<div class="baris" style="margin-bottom:8px">'+
+        '<div class="emo" style="background:var(--hijau); color:#fff; font-weight:700; font-size:16px">'+esc((p.authorAvatar||'?').substring(0,1))+'</div>'+
+        '<div class="tumbuh"><div style="font-weight:600; font-size:14px">'+esc(p.authorName)+'</div>'+
+        '<div class="kecil">'+esc(p.authorBadge||'')+' · '+esc(p.timestamp)+'</div></div>'+
+      '</div>'+
+      '<p style="font-size:14.5px">'+esc(p.content)+'</p>'+
+      (p.mealShared?'<div class="chip">🍽️ '+esc(p.mealShared.name)+' · '+rb(p.mealShared.calories)+' kkal</div>':'')+
+      (p.workoutShared?'<div class="chip biru">🏃 '+esc(p.workoutShared.type)+' · '+esc(p.workoutShared.duration)+' · '+rb(p.workoutShared.caloriesBurned)+' kkal</div>':'')+
+      '<div class="baris" style="margin-top:10px; gap:14px">'+
+        '<button class="b kecilb '+(p.userLiked?'':'garis')+'" onclick="sukaPost(\''+jsq(p.id)+'\')">❤️ '+n(p.likesCount)+'</button>'+
+        '<span class="kecil">💬 '+n(p.commentsCount)+' komentar</span>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+
+  return h;
+}
+
+function ikutTantangan(id){
+  var c=(S.tantangan||[]).filter(function(x){ return x.id===id; })[0];
+  if(!c) return;
+  var baru=!c.joined;
+  ubah('tantangan_ikut', {id:id, joined:baru, progressPercent:baru?n(c.progressPercent):0}, function(){
+    c.joined=baru; if(!baru) c.progressPercent=0;
+  });
+  toast(baru?'Kamu bergabung di "'+c.title+'"':'Keluar dari tantangan','ok');
+}
+
+function kirimPost(lampirkan){
+  var isi=(document.getElementById('kmIsi').value||'').trim();
+  if(!isi) return toast('Tulis sesuatu dulu','err');
+  var p=S.profil||{};
+  var post={
+    id:idBaru('cp'), authorName:p.name||'Saya',
+    authorAvatar:(p.name||'S').substring(0,1).toUpperCase(),
+    authorBadge:'Level '+n(p.userLevel,1),
+    timestamp:'Baru saja', content:isi, likesCount:0, commentsCount:0, userLiked:false,
+    mealShared:null, workoutShared:null
+  };
+  if(lampirkan){
+    var t=totalHarian(hariIni());
+    post.mealShared={name:'Total asupan hari ini', calories:t.kalori};
+  }
+  ubah('komunitas_post', post, function(){ S.komunitas=S.komunitas||[]; S.komunitas.push(post); });
+  toast('Postingan terkirim','ok');
+}
+
+function sukaPost(id){
+  var p=(S.komunitas||[]).filter(function(x){ return x.id===id; })[0];
+  if(!p) return;
+  ubah('komunitas_suka', {id:id}, function(){
+    p.userLiked=!p.userLiked;
+    p.likesCount=Math.max(0, n(p.likesCount)+(p.userLiked?1:-1));
+  });
+}
+
+/* ================================================================
+   TAB 8 — AHLI GIZI AI
+   ================================================================ */
+function viewAhliGizi(){
+  var pesan=S.konsultasi||[];
+  var h='<div class="kartu">'+
+      '<div class="baris" style="margin-bottom:12px">'+
+        '<div class="emo" style="background:var(--hijau); color:#fff; font-size:19px">👩‍⚕️</div>'+
+        '<div class="tumbuh"><div style="font-weight:700">Dr. Nutri</div>'+
+        '<div class="kecil">Asisten ahli gizi berbasis AI</div></div>'+
+      '</div>'+
+      '<div id="kotakChat" style="display:flex; flex-direction:column; gap:9px; max-height:52vh; overflow-y:auto; padding:4px">'+
+        (pesan.length ? pesan.map(function(m){
+          return '<div class="gelembung '+(m.sender==='user'?'saya':'ai')+'">'+esc(m.text)+'</div>';
+        }).join('') :
+        '<div class="gelembung ai">Halo! Saya Dr. Nutri. Ceritakan keluhan atau target gizimu, nanti saya bantu susun sarannya. Contoh: "Bagaimana cara menaikkan protein tanpa menambah kalori berlebih?"</div>')+
+      '</div>'+
+      '<div class="baris" style="margin-top:12px">'+
+        '<textarea id="agTanya" placeholder="Tulis pertanyaanmu…" style="min-height:52px"></textarea>'+
+        '<button class="b" id="agKirim" onclick="tanyaAhliGizi()" '+(S.aiAktif?'':'disabled')+'>Kirim</button>'+
+      '</div>'+
+      '<div class="baris wrap" style="gap:6px; margin-top:9px">'+
+        ['Menu sarapan tinggi protein?','Cara mengatasi lapar malam hari','Apakah nasi merah lebih baik?','Camilan sehat di kantor']
+        .map(function(q){ return '<button class="b kecilb garis" onclick="isiTanya(\''+jsq(q)+'\')">'+esc(q)+'</button>'; }).join('')+
+      '</div>'+
+      (S.aiAktif?'':'<p class="kecil" style="color:var(--oranye); margin-top:10px">Fitur AI nonaktif — isi GEMINI_API_KEY di Script Properties.</p>')+
+      '<p class="kecil" style="margin-top:12px; border-top:1px solid var(--garis); padding-top:9px">'+
+        'Saran dari asisten ini bersifat edukatif dan bukan pengganti pemeriksaan tenaga kesehatan. '+
+        'Untuk kondisi medis tertentu, konsultasikan dengan dokter atau ahli gizi berlisensi.</p>'+
+    '</div>';
+  return h;
+}
+function sesudah_ahligizi(){
+  var k=document.getElementById('kotakChat'); if(k) k.scrollTop=k.scrollHeight;
+}
+function isiTanya(q){ document.getElementById('agTanya').value=q; }
+
+function tanyaAhliGizi(){
+  var el=document.getElementById('agTanya');
+  var q=(el.value||'').trim();
+  if(!q) return;
+  if(!online) return toast('Konsultasi AI butuh koneksi internet','err');
+  el.value='';
+  S.konsultasi=S.konsultasi||[];
+  S.konsultasi.push({id:idBaru('dm'), sender:'user', text:q, timestamp:jamKini()});
+  render();
+
+  var kotak=document.getElementById('kotakChat');
+  var tunggu=document.createElement('div');
+  tunggu.className='gelembung ai';
+  tunggu.innerHTML='<span class="muat hijau"></span> Dr. Nutri sedang mengetik…';
+  kotak.appendChild(tunggu); kotak.scrollTop=kotak.scrollHeight;
+
+  api('ai_ahligizi', {userQuestion:q, history:S.konsultasi.slice(-8)}).then(function(r){
+    S.konsultasi.push({id:idBaru('dm'), sender:'dietitian', text:r.reply, timestamp:jamKini()});
+    simpan(K.DATA,S); render();
+  }).catch(function(e){
+    tunggu.innerHTML='<span style="color:var(--merah)">'+esc(e.message)+'</span>';
+  });
+}
+
+/* ================================================================
+   TAB 9 — KALENDER & LAPORAN
+   ================================================================ */
+function viewLaporan(){
+  var hari=tujuhHari(), p=S.profil||{};
+  var data=hari.map(function(t){ return totalHarian(t); });
+  var maks=Math.max.apply(null, data.map(function(d){ return d.kalori; }).concat([n(p.dailyCalorieTarget)]));
+
+  var h='<div class="kartu">'+
+      '<div class="baris rata"><h3>📈 Kalori 7 Hari Terakhir</h3>'+
+        '<button class="b kecilb garis tanpa-cetak" onclick="window.print()">🖨 Cetak / PDF</button></div>'+
+      '<div class="grafik">'+
+        hari.map(function(t,i){
+          var tinggi=maks? (data[i].kalori/maks*100) : 0;
+          return '<div><div class="btg" style="height:'+tinggi+'%" title="'+rb(data[i].kalori)+' kkal"></div>'+
+                 '<div class="lbl">'+namaHari(t).substring(0,3)+'</div></div>';
+        }).join('')+
+      '</div>'+
+      '<div class="kecil tengah" style="margin-top:6px">Target harian: '+rb(p.dailyCalorieTarget)+' kkal</div>'+
+    '</div>';
+
+  /* ringkasan mingguan */
+  var totKal=0, totLangkah=0, totAir=0, hariAktif=0;
+  hari.forEach(function(t,i){
+    totKal+=data[i].kalori; totLangkah+=n(aktivitasHari(t).steps); totAir+=airHari(t);
+    if(data[i].kalori>0) hariAktif++;
+  });
+  var menit=0;
+  (S.jadwal||[]).forEach(function(j){ if(hari.indexOf(j.date)>=0 && j.completed) menit+=n(j.durationMinutes); });
+
+  h+='<div class="kartu"><h3>Ringkasan Minggu Ini</h3><div class="grid g4">'+
+      kartuStat('Total Kalori', rb(totKal))+
+      kartuStat('Rata-rata/Hari', rb(Math.round(totKal/7)))+
+      kartuStat('Total Langkah', rb(totLangkah))+
+      kartuStat('Menit Latihan', rb(menit))+
+      kartuStat('Total Air', rb(totAir)+' ml')+
+      kartuStat('Hari Tercatat', hariAktif+'/7')+
+    '</div>'+
+    '<button class="b penuh" style="margin-top:11px" onclick="mintaLaporan()" '+(S.aiAktif?'':'disabled')+'>✨ Buat Ulasan AI Mingguan</button>'+
+    '<div id="isiLaporan"></div></div>';
+
+  /* kalender latihan */
+  h+='<div class="kartu">'+
+      '<div class="baris rata"><h3>🗓️ Jadwal Latihan</h3>'+
+        '<button class="b kecilb" onclick="modalJadwal()">+ Tambah</button></div>'+
+      (function(){
+        var jd=(S.jadwal||[]).slice().sort(function(a,b){ return (a.date+a.time)<(b.date+b.time)?-1:1; });
+        if(!jd.length) return '<p class="kecil">Belum ada jadwal latihan.</p>';
+        var grup={};
+        jd.forEach(function(j){ (grup[j.date]=grup[j.date]||[]).push(j); });
+        return Object.keys(grup).sort().map(function(t){
+          return '<h4 style="margin-top:12px">'+namaHari(t)+', '+tglIndo(t)+'</h4>'+
+                 grup[t].map(barisJadwal).join('');
+        }).join('');
+      })()+
+    '</div>';
+
+  /* riwayat berat */
+  var beratData=(S.aktivitas||[]).filter(function(a){ return n(a.weightKg)>0; }).slice(-14);
+  if(beratData.length>1){
+    var minB=Math.min.apply(null, beratData.map(function(a){return n(a.weightKg)}));
+    var maxB=Math.max.apply(null, beratData.map(function(a){return n(a.weightKg)}));
+    var rentang=Math.max(0.5, maxB-minB);
+    h+='<div class="kartu"><h3>⚖️ Riwayat Berat Badan</h3>'+
+      '<div class="grafik">'+beratData.map(function(a){
+        var tinggi=((n(a.weightKg)-minB)/rentang)*80+20;
+        return '<div><div class="btg" style="height:'+tinggi+'%; background:linear-gradient(180deg,#38bdf8,#0284c7)" title="'+n(a.weightKg)+' kg"></div>'+
+               '<div class="lbl">'+a.date.substring(8)+'</div></div>';
+      }).join('')+'</div>'+
+      '<div class="kecil tengah" style="margin-top:6px">'+minB+' – '+maxB+' kg · target '+n(p.targetWeightKg)+' kg</div></div>';
+  }
+
+  return h;
+}
+
+function barisJadwal(j){
+  return '<div class="item">'+
+    '<div class="emo">'+(j.type&&j.type.indexOf('Lari')>=0?'🏃':j.type==='Bersepeda'?'🚴':j.type==='Renang'?'🏊':j.type&&j.type.indexOf('Yoga')>=0?'🧘':'🏋️')+'</div>'+
+    '<div class="tumbuh"><div style="font-weight:600; font-size:14px; '+(j.completed?'text-decoration:line-through; opacity:.6':'')+'">'+esc(j.title)+'</div>'+
+    '<div class="kecil">'+esc(j.time)+' · '+n(j.durationMinutes)+' mnt · target '+rb(j.targetCalories)+' kkal</div></div>'+
+    '<button class="b kecilb '+(j.completed?'abu':'')+'" onclick="toggleJadwal(\''+jsq(j.id)+'\')">'+(j.completed?'↩':'✓')+'</button>'+
+    '<button class="tutup" onclick="hapusJadwal(\''+jsq(j.id)+'\')">🗑</button>'+
+  '</div>';
+}
+
+function toggleJadwal(id){
+  var j=(S.jadwal||[]).filter(function(x){ return x.id===id; })[0];
+  if(!j) return;
+  j.completed=!j.completed;
+  ubah('jadwal_simpan', j, function(){});
+  if(j.completed) toast('Mantap! Latihan selesai +25 XP','ok');
+}
+function hapusJadwal(id){
+  if(!confirm('Hapus jadwal ini?')) return;
+  ubah('jadwal_hapus', {id:id}, function(){ S.jadwal=(S.jadwal||[]).filter(function(x){ return x.id!==id; }); });
+}
+
+function modalJadwal(pre){
+  pre=pre||{};
+  var tipe=['Lari/Jogging','Latihan Beban','HIIT / Kardio','Yoga & Stretching','Bersepeda','Renang'];
+  bukaModal('Jadwalkan Latihan',
+    '<div class="ruas"><label class="f">Judul</label><input id="jdJudul" value="'+esc(pre.title||'')+'" placeholder="mis. Lari Pagi Dadaha"></div>'+
+    '<div class="grid g2">'+
+      '<div class="ruas"><label class="f">Tanggal</label><input type="date" id="jdTgl" value="'+(pre.date||hariIni())+'"></div>'+
+      '<div class="ruas"><label class="f">Jam</label><input type="time" id="jdJam" value="'+(pre.time||'06:00')+'"></div>'+
+    '</div>'+
+    '<div class="ruas"><label class="f">Jenis</label><select id="jdTipe">'+
+      tipe.map(function(t){ return '<option'+(pre.type===t?' selected':'')+'>'+t+'</option>'; }).join('')+'</select></div>'+
+    '<div class="grid g2">'+
+      '<div class="ruas"><label class="f">Durasi (menit)</label><input type="number" id="jdDurasi" value="'+n(pre.durationMinutes,30)+'"></div>'+
+      '<div class="ruas"><label class="f">Target kalori</label><input type="number" id="jdKal" value="'+n(pre.targetCalories,250)+'"></div>'+
+    '</div>'+
+    '<div class="ruas"><label class="f">Catatan</label><input id="jdCatat" value="'+esc(pre.notes||'')+'"></div>'+
+    '<button class="b penuh" onclick="simpanJadwal()">Simpan Jadwal</button>'
+  );
+}
+
+function simpanJadwal(){
+  var j={
+    id:idBaru('w'),
+    title:document.getElementById('jdJudul').value.trim()||'Latihan',
+    date:document.getElementById('jdTgl').value||hariIni(),
+    time:document.getElementById('jdJam').value||'06:00',
+    type:document.getElementById('jdTipe').value,
+    durationMinutes:n(document.getElementById('jdDurasi').value,30),
+    targetCalories:n(document.getElementById('jdKal').value,250),
+    notes:document.getElementById('jdCatat').value.trim(),
+    completed:false
+  };
+  tutupModal();
+  ubah('jadwal_simpan', j, function(){ S.jadwal=S.jadwal||[]; S.jadwal.push(j); });
+  toast('Jadwal tersimpan','ok');
+}
+
+function mintaLaporan(){
+  var el=document.getElementById('isiLaporan');
+  el.innerHTML='<p class="kecil" style="margin-top:10px"><span class="muat hijau"></span> Menyusun ulasan mingguan…</p>';
+  api('ai_laporan_mingguan', {}).then(function(r){
+    var w=r.report||{};
+    el.innerHTML='<div class="kartu rapat" style="margin-top:11px">'+
+      '<div class="baris rata"><h4>'+esc(w.weekLabel||'Minggu Ini')+'</h4>'+
+        '<span class="chip">Skor '+n(w.complianceScore)+'/100</span></div>'+
+      '<ul class="kecil" style="padding-left:18px">'+
+        (w.summaryInsights||[]).map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ul>'+
+      '<p class="kecil" style="border-top:1px solid var(--garis); padding-top:8px">'+esc(w.aiAdvice||'')+'</p></div>';
+  }).catch(function(e){
+    el.innerHTML='<p class="kecil" style="color:var(--merah)">'+esc(e.message)+'</p>';
+  });
+}
+
+/* ================================================================
+   MODAL PROFIL & NOTIFIKASI
+   ================================================================ */
+function modalProfil(){
+  var p=S.profil||{}, d=p.turunan||{};
+  bukaModal('Profil & Target',
+    '<div class="ruas"><label class="f">Nama</label><input id="pfNama" value="'+esc(p.name||'')+'"></div>'+
+    '<div class="grid g2">'+
+      '<div class="ruas"><label class="f">Usia</label><input type="number" id="pfUsia" value="'+n(p.age,28)+'"></div>'+
+      '<div class="ruas"><label class="f">Jenis kelamin</label><select id="pfKelamin">'+
+        '<option value="pria"'+(p.gender==='pria'?' selected':'')+'>Pria</option>'+
+        '<option value="wanita"'+(p.gender==='wanita'?' selected':'')+'>Wanita</option></select></div>'+
+      '<div class="ruas"><label class="f">Tinggi (cm)</label><input type="number" id="pfTinggi" value="'+n(p.heightCm,170)+'"></div>'+
+      '<div class="ruas"><label class="f">Berat (kg)</label><input type="number" step="0.1" id="pfBerat" value="'+n(p.weightKg,70)+'"></div>'+
+      '<div class="ruas"><label class="f">Target berat (kg)</label><input type="number" step="0.1" id="pfTarget" value="'+n(p.targetWeightKg,66)+'"></div>'+
+      '<div class="ruas"><label class="f">Target langkah</label><input type="number" id="pfLangkah" value="'+n(p.dailyStepsTarget,8000)+'"></div>'+
+    '</div>'+
+    '<div class="ruas"><label class="f">Tujuan</label><select id="pfTujuan">'+
+      Object.keys(TUJUAN).map(function(k){ return '<option value="'+k+'"'+(p.dietaryGoal===k?' selected':'')+'>'+TUJUAN[k]+'</option>'; }).join('')+
+    '</select></div>'+
+    '<div class="ruas"><label class="f">Tingkat aktivitas</label><select id="pfAktivitas">'+
+      Object.keys(AKTIVITAS).map(function(k){ return '<option value="'+k+'"'+(p.activityLevel===k?' selected':'')+'>'+AKTIVITAS[k]+'</option>'; }).join('')+
+    '</select></div>'+
+    '<div class="ruas"><label class="f">Gaya bicara asisten AI</label><select id="pfNada">'+
+      ['Motivator','Formal','Santai'].map(function(k){ return '<option'+(p.aiTonePreference===k?' selected':'')+'>'+k+'</option>'; }).join('')+
+    '</select></div>'+
+    '<div class="kartu rapat" style="background:var(--bg)"><div class="kecil">Target dihitung otomatis dengan rumus Mifflin-St Jeor:</div>'+
+      '<div class="grid g4" style="margin-top:8px">'+
+        kartuStat('Kalori', rb(p.dailyCalorieTarget))+kartuStat('Protein', n(p.dailyProteinTarget)+' g')+
+        kartuStat('BMR', rb(d.bmr))+kartuStat('BMI', (d.bmi||'-'))+
+      '</div></div>'+
+    '<button class="b penuh" onclick="simpanProfil()">Simpan Profil</button>'
+  );
+}
+
+function simpanProfil(){
+  var data={
+    name:document.getElementById('pfNama').value.trim(),
+    age:n(document.getElementById('pfUsia').value,28),
+    gender:document.getElementById('pfKelamin').value,
+    heightCm:n(document.getElementById('pfTinggi').value,170),
+    weightKg:n(document.getElementById('pfBerat').value,70),
+    targetWeightKg:n(document.getElementById('pfTarget').value,66),
+    dailyStepsTarget:n(document.getElementById('pfLangkah').value,8000),
+    dietaryGoal:document.getElementById('pfTujuan').value,
+    activityLevel:document.getElementById('pfAktivitas').value,
+    aiTonePreference:document.getElementById('pfNada').value
+  };
+  tutupModal();
+  /* hitung target lokal agar tampilan langsung berubah walau offline */
+  var bmr=(10*data.weightKg)+(6.25*data.heightCm)-(5*data.age)+(data.gender==='wanita'?-161:5);
+  var fk={sedentari:1.2, ringan:1.375, sedang:1.55, berat:1.725, ekstrem:1.9}[data.activityLevel]||1.55;
+  var tdee=bmr*fk;
+  var kal=data.dietaryGoal==='turun_bb'?tdee-500:(data.dietaryGoal==='tambah_otot'?tdee+300:tdee);
+  kal=Math.max(1200, Math.round(kal/10)*10);
+  var ppk=data.dietaryGoal==='tambah_otot'?1.8:(data.dietaryGoal==='turun_bb'?1.6:1.3);
+  var pro=Math.round(data.weightKg*ppk), lem=Math.round(kal*0.25/9);
+
+  ubah('profil_update', data, function(){
+    for(var k in data) S.profil[k]=data[k];
+    S.profil.dailyCalorieTarget=kal;
+    S.profil.dailyProteinTarget=pro;
+    S.profil.dailyFatTarget=lem;
+    S.profil.dailyCarbsTarget=Math.max(50, Math.round((kal-pro*4-lem*9)/4));
+    S.profil.dailyWaterTargetMl=Math.max(1500, Math.round(data.weightKg*35/50)*50);
+    S.profil.turunan={bmr:Math.round(bmr), tdee:Math.round(tdee),
+      bmi:Math.round(data.weightKg/Math.pow(data.heightCm/100,2)*10)/10};
+  });
+  toast('Profil & target diperbarui','ok');
+}
+
+function modalNotifikasi(){
+  bukaModal('🔔 Pengingat Harian',
+    (S.notifikasi||[]).map(function(nt){
+      return '<div class="item">'+
+        '<div class="emo">'+(nt.type==='water'?'💧':nt.type==='meal'?'🍽️':nt.type==='workout'?'🏋️':'❤️')+'</div>'+
+        '<div class="tumbuh"><div style="font-weight:600; font-size:14px">'+esc(nt.title)+'</div>'+
+        '<div class="kecil">'+esc(nt.time)+' · '+esc(nt.message)+'</div></div>'+
+        '<button class="b kecilb '+(nt.enabled?'':'abu')+'" onclick="toggleNotif(\''+jsq(nt.id)+'\')">'+(nt.enabled?'Aktif':'Mati')+'</button>'+
+      '</div>';
+    }).join('')+
+    '<p class="kecil" style="margin-top:12px">Pengingat muncul sebagai notifikasi peramban selama aplikasi masih terbuka di latar belakang. '+
+    'Izinkan notifikasi bila diminta.</p>'+
+    '<button class="b penuh garis" onclick="mintaIzinNotif()">Aktifkan Notifikasi Peramban</button>'
+  );
+}
+
+function toggleNotif(id){
+  var nt=(S.notifikasi||[]).filter(function(x){ return x.id===id; })[0];
+  if(!nt) return;
+  nt.enabled=!nt.enabled;
+  ubah('notifikasi_simpan', nt, function(){});
+  tutupModal(); modalNotifikasi();
+}
+
+function mintaIzinNotif(){
+  if(!('Notification' in window)) return toast('Peramban tidak mendukung notifikasi','err');
+  Notification.requestPermission().then(function(izin){
+    toast(izin==='granted'?'Notifikasi diaktifkan':'Izin notifikasi ditolak', izin==='granted'?'ok':'info');
+    if(izin==='granted') pasangPengingat();
+  });
+}
+
+var timerPengingat=null;
+function pasangPengingat(){
+  if(timerPengingat) clearInterval(timerPengingat);
+  timerPengingat=setInterval(function(){
+    if(Notification.permission!=='granted' || !S) return;
+    var jam=jamKini();
+    (S.notifikasi||[]).forEach(function(nt){
+      if(nt.enabled && nt.time===jam){
+        var kunci='notif_'+nt.id+'_'+hariIni();
+        if(localStorage.getItem(kunci)) return;
+        localStorage.setItem(kunci,'1');
+        try{ new Notification(nt.title, {body:nt.message, icon:'icon.svg'}); }catch(e){}
+      }
+    });
+  }, 30000);
+}
+
+/* ================================================================
+   MODAL UMUM
+   ================================================================ */
+function bukaModal(judul, isi){
+  document.getElementById('modalHost').innerHTML =
+    '<div class="tirai" onclick="if(event.target===this) tutupModal()">'+
+      '<div class="modal">'+
+        '<div class="modal-judul"><h2>'+esc(judul)+'</h2><button class="tutup" onclick="tutupModal()">✕</button></div>'+
+        isi+
+      '</div>'+
+    '</div>';
+  document.body.style.overflow='hidden';
+}
+function tutupModal(){
+  document.getElementById('modalHost').innerHTML='';
+  document.body.style.overflow='';
+}
+
+/* ================================================================
+   TEMA, KONEKSI, INISIALISASI
+   ================================================================ */
+function setTema(t){
+  document.documentElement.setAttribute('data-tema', t);
+  document.getElementById('btnTema').textContent = t==='gelap' ? '☀️' : '🌙';
+  simpan(K.TEMA, t);
+}
+
+function pantauKoneksi(){
+  function ubahStatus(){
+    online = navigator.onLine;
+    perbaruiStatus();
+    if(online){
+      sinkronAntrean().then(function(){ return muatData(true); });
+    } else {
+      toast('Mode offline aktif. Perubahanmu tetap tersimpan.','info');
+    }
+  }
+  window.addEventListener('online', ubahStatus);
+  window.addEventListener('offline', ubahStatus);
+}
+
+function daftarSW(){
+  if(!('serviceWorker' in navigator)) return;
+  if(location.protocol==='file:') return;
+  if(location.hostname.indexOf('script.google')>=0) return;  /* GAS memakai iframe sandbox */
+  navigator.serviceWorker.register('sw.js').catch(function(){});
+}
+
+document.getElementById('btnTema').onclick=function(){
+  setTema(document.documentElement.getAttribute('data-tema')==='gelap'?'terang':'gelap');
+};
+document.getElementById('btnNotif').onclick=modalNotifikasi;
+document.getElementById('btnProfil').onclick=modalProfil;
+
+window.addEventListener('beforeunload', function(){ hentikanKamera(); });
+
+/* ---------- pemasangan PWA (khusus GitHub Pages) ---------- */
+var promptPasang=null;
+window.addEventListener('beforeinstallprompt', function(e){
+  e.preventDefault(); promptPasang=e;
+  var b=document.getElementById('btnPasang'); if(b) b.classList.remove('sembunyi');
+});
+(function(){
+  var b=document.getElementById('btnPasang');
+  if(b) b.onclick=function(){
+    if(!promptPasang) return toast('Gunakan menu peramban > "Tambahkan ke layar utama"','info');
+    promptPasang.prompt();
+    promptPasang.userChoice.then(function(r){
+      if(r.outcome==='accepted') toast('NutriFit ID terpasang di perangkatmu','ok');
+      promptPasang=null; b.classList.add('sembunyi');
+    });
+  };
+})();
+window.addEventListener('appinstalled', function(){ toast('Aplikasi terpasang','ok'); });
+
+(function mulai(){
+  setTema(baca(K.TEMA,'terang'));
+  pantauKoneksi();
+  daftarSW();
+  muatData(true).then(function(){
+    if(baca(K.ANTREAN,[]).length) sinkronAntrean();
+    if('Notification' in window && Notification.permission==='granted') pasangPengingat();
+  });
+  /* segarkan data tiap 5 menit saat online */
+  setInterval(function(){ if(online && !document.hidden) muatData(true); }, 300000);
+})();
+</script>
+</body>
+</html>
