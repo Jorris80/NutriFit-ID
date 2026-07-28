@@ -186,7 +186,7 @@ textarea{resize:vertical; min-height:80px}
 
 /* ============================ MODAL ============================ */
 .tirai{
-  position:fixed; inset:0; background:rgba(15,23,42,.55); z-index:60; display:flex;
+  position:fixed; inset:0; background:rgba(15,23,42,.55); z-index:4000; display:flex;
   align-items:flex-end; justify-content:center; padding:0; backdrop-filter:blur(2px);
 }
 @media(min-width:640px){ .tirai{align-items:center; padding:20px} }
@@ -198,9 +198,63 @@ textarea{resize:vertical; min-height:80px}
 .modal-judul{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px}
 .tutup{border:0; background:var(--bg); width:32px; height:32px; border-radius:10px; font-size:17px; cursor:pointer; color:var(--teks)}
 
+/* ================= AVATAR, PENAMPIL ZOOM, EDITOR JALUR ================= */
+.avatar-tombol{padding:0; overflow:hidden}
+.avatar-tombol img{width:100%; height:100%; object-fit:cover; display:block; border-radius:inherit}
+.avatar-tombol.ada-foto{border:2px solid rgba(255,255,255,.75)}
+
+.foto-pratinjau{
+  width:104px; height:104px; border-radius:50%; object-fit:cover; cursor:pointer;
+  border:3px solid var(--hijau); background:var(--bg); display:inline-flex;
+  align-items:center; justify-content:center; font-size:42px;
+}
+.foto-pratinjau.tanpa-foto{cursor:default; border-style:dashed; color:var(--redup)}
+.foto-hasil{width:100%; max-height:230px; object-fit:cover; border-radius:12px; cursor:zoom-in; display:block}
+
+.zoom-tirai{
+  position:fixed; inset:0; background:rgba(2,6,23,.95); z-index:6000;
+  display:flex; align-items:center; justify-content:center;
+  overflow:hidden; touch-action:none; cursor:grab;
+}
+.zoom-tirai img{
+  max-width:94vw; max-height:82vh; width:auto; height:auto; border-radius:10px;
+  transform-origin:center center; will-change:transform;
+  user-select:none; -webkit-user-drag:none; box-shadow:0 20px 60px rgba(0,0,0,.55);
+}
+.zoom-tirai img.kecil{height:min(62vh,74vw)}
+.zoom-info{
+  position:fixed; top:calc(16px + env(safe-area-inset-top)); left:16px; z-index:6100;
+  color:#fff; font-size:12.5px; opacity:.82; max-width:60vw;
+}
+.zoom-tutup{
+  position:fixed; top:calc(12px + env(safe-area-inset-top)); right:14px; z-index:6100; border:0;
+  background:rgba(255,255,255,.16); color:#fff; width:42px; height:42px;
+  border-radius:13px; font-size:18px; cursor:pointer;
+}
+.zoom-alat{
+  position:fixed; left:0; right:0; bottom:calc(20px + env(safe-area-inset-bottom));
+  display:flex; gap:10px; justify-content:center; z-index:6100;
+}
+.zoom-alat button{
+  border:0; background:rgba(255,255,255,.16); color:#fff; width:48px; height:48px;
+  border-radius:15px; font-size:20px; cursor:pointer;
+}
+
+.kotak-edit{
+  background:var(--hijau-g); border:1px solid var(--hijau); border-radius:11px;
+  padding:9px 11px; font-size:12.8px; margin-bottom:10px; line-height:1.55;
+}
+.leaflet-container.menggambar{cursor:crosshair}
+.tt-titik{
+  background:#0ea5e9 !important; border:0 !important; color:#fff !important;
+  font-size:10.5px !important; font-weight:800 !important; padding:1px 5px !important;
+  border-radius:6px !important; box-shadow:none !important;
+}
+.tt-titik::before{display:none !important}
+
 /* ============================ TOAST ============================ */
 #toast{
-  position:fixed; left:50%; transform:translateX(-50%); bottom:100px; z-index:80;
+  position:fixed; left:50%; transform:translateX(-50%); bottom:100px; z-index:5000;
   display:flex; flex-direction:column; gap:8px; align-items:center; pointer-events:none; width:92%; max-width:420px;
 }
 .toast{
@@ -236,7 +290,7 @@ textarea{resize:vertical; min-height:80px}
       <button class="tombol-ikon sembunyi" id="btnPasang" title="Pasang aplikasi">⬇️</button>
       <button class="tombol-ikon" id="btnTema" title="Ganti tema">🌙</button>
       <button class="tombol-ikon" id="btnNotif" title="Pengingat">🔔</button>
-      <button class="tombol-ikon" id="btnProfil" title="Profil">👤</button>
+      <button class="tombol-ikon avatar-tombol" id="btnProfil" title="Profil">👤</button>
     </div>
   </div>
   <div class="baris" style="margin-top:9px; gap:7px">
@@ -496,7 +550,24 @@ function render(){
   }[tab] || viewRingkasan;
 
   document.getElementById('tampilan').innerHTML = f();
+  perbaruiAvatarHeader();
   if(typeof window['sesudah_'+tab] === 'function') window['sesudah_'+tab]();
+}
+
+/* Tombol profil di bilah atas menampilkan foto bila pengguna sudah memasangnya. */
+function perbaruiAvatarHeader(){
+  var b=document.getElementById('btnProfil'); if(!b) return;
+  var u=(S && S.profil && S.profil.profilePictureUrl) || '';
+  if(u){
+    if(b.getAttribute('data-foto')!==String(u.length)){
+      b.innerHTML='<img src="'+esc(u)+'" alt="Foto profil">';
+      b.setAttribute('data-foto', String(u.length));
+    }
+    b.classList.add('ada-foto');
+  } else {
+    if(b.getAttribute('data-foto')!=='0'){ b.innerHTML='👤'; b.setAttribute('data-foto','0'); }
+    b.classList.remove('ada-foto');
+  }
 }
 
 function pindah(id){
@@ -604,6 +675,9 @@ function viewRingkasan(){
       kartuStat('BMI', (d.bmi||'-'),'')+
       kartuStat('TDEE', rb(d.tdee)+' kkal','')+
     '</div>'+
+    (p.profilePictureUrl
+      ? '<div class="tengah" style="margin-top:12px"><img src="'+esc(p.profilePictureUrl)+'" class="foto-pratinjau" alt="Foto profil" onclick="zoomFotoProfil()"></div>'
+      : '')+
     '<button class="b garis penuh" style="margin-top:11px" onclick="modalProfil()">Ubah Data Diri & Target</button></div>';
 
   /* pencapaian */
@@ -706,6 +780,20 @@ function viewCatat(){
       '<button class="b kecilb" onclick="modalTambahMakanan()">+ Baru</button>'+
     '</div></div>';
 
+  /* analisis foto makanan dengan AI lewat kamera perangkat */
+  h+='<div class="kartu">'+
+      '<div class="baris rata"><h3>📸 Analisis Foto Makanan</h3>'+
+        (S.aiAktif ? '<span class="chip">AI aktif</span>' : '<span class="chip abu">AI nonaktif</span>')+'</div>'+
+      '<p class="kecil">Potret piringmu, AI memperkirakan kalori, protein, karbohidrat, dan lemaknya, lalu hasilnya bisa langsung dicatat ke jurnal.</p>'+
+      '<div class="baris wrap" style="gap:8px">'+
+        '<label class="b" style="cursor:pointer">📷 Buka Kamera'+
+          '<input type="file" accept="image/*" capture="environment" style="display:none" onchange="analisisFotoMakan(this)"></label>'+
+        '<label class="b garis" style="cursor:pointer">🖼️ Pilih dari Galeri'+
+          '<input type="file" accept="image/*" style="display:none" onchange="analisisFotoMakan(this)"></label>'+
+      '</div>'+
+      '<div id="hasilFotoMakan"></div>'+
+    '</div>';
+
   /* pencarian */
   h+='<div class="kartu rapat">'+
       '<input id="inpCari" placeholder="🔍 Cari makanan… (mis. soto, tempe)" value="'+esc(cariMakanan)+'" oninput="cariMakanan=this.value; renderHasilCari()">'+
@@ -757,6 +845,88 @@ function renderHasilCari(){
       '<button class="b kecilb" onclick="modalPilihPorsi(\''+jsq(m.id)+'\')">Tambah</button>'+
     '</div>';
   }).join('');
+}
+
+/* ---------------- Analisis gizi dari foto kamera (AI) ---------------- */
+var fotoMakanTerakhir=null;
+
+function analisisFotoMakan(input){
+  var file=input.files && input.files[0];
+  input.value='';
+  if(!file) return;
+  var el=document.getElementById('hasilFotoMakan'); if(!el) return;
+
+  if(!S.aiAktif){
+    el.innerHTML='<p class="kecil" style="color:var(--oranye); margin-top:10px">Fitur AI belum aktif. Isi <b>GEMINI_API_KEY</b> pada Script Properties proyek Apps Script.</p>';
+    return;
+  }
+  if(!online){
+    el.innerHTML='<p class="kecil" style="color:var(--oranye); margin-top:10px">Analisis foto membutuhkan koneksi internet. Sementara ini, catat manual lewat tombol “+ Baru”.</p>';
+    return;
+  }
+
+  el.innerHTML='<p class="kecil" style="margin-top:10px"><span class="muat hijau"></span> Membaca foto & memperkirakan gizinya…</p>';
+  kecilkanGambar(file, 1024, function(b64){
+    fotoMakanTerakhir='data:image/jpeg;base64,'+b64;
+    api('ai_analisis_makanan', {imageBase64:b64, mimeType:'image/jpeg'}).then(function(r){
+      var f=r.food||{};
+      if(f.savedId){
+        f.id=f.savedId;
+        S.makanan=S.makanan||[];
+        S.makanan=S.makanan.filter(function(x){ return x.id!==f.id; });
+        S.makanan.unshift(f);
+        simpan(K.DATA,S);
+      }
+      el.innerHTML=kartuFotoMakan(f);
+    }).catch(function(e){
+      el.innerHTML='<p class="kecil" style="color:var(--merah); margin-top:10px">'+esc(e.message)+'</p>';
+    });
+  });
+}
+
+function kartuFotoMakan(f){
+  var kal=n(f.calories), pro=n(f.protein), kar=n(f.carbs), lem=n(f.fat);
+  var dariMakro=(pro*4)+(kar*4)+(lem*9);
+  return '<div class="kartu rapat" style="margin-top:12px">'+
+    (fotoMakanTerakhir ? '<img src="'+fotoMakanTerakhir+'" class="foto-hasil" onclick="bukaZoom(fotoMakanTerakhir,\'Foto makanan\')">' : '')+
+    '<div class="baris rata" style="margin-top:10px"><h4>'+esc(f.name||'Makanan')+'</h4>'+
+      '<span class="chip '+(f.confidence==='rendah'?'oranye':'')+'">Keyakinan '+esc(f.confidence||'sedang')+'</span></div>'+
+    '<p class="kecil">'+esc(f.brand||'')+(f.brand?' · ':'')+esc(f.servingSize||'1 porsi')+'</p>'+
+    '<div class="grid g4">'+
+      kartuStat('Kalori', rb(kal))+kartuStat('Protein', pro+' g')+
+      kartuStat('Karbo', kar+' g')+kartuStat('Lemak', lem+' g')+
+    '</div>'+
+    '<p class="kecil" style="margin-top:8px">Dihitung dari makro: '+rb(dariMakro)+' kkal '+
+      '(protein '+rb(pro*4)+' + karbo '+rb(kar*4)+' + lemak '+rb(lem*9)+').'+
+      (Math.abs(dariMakro-kal)>Math.max(60, kal*0.18) ? ' Selisihnya cukup besar dari angka kalori di atas, jadi perlakukan sebagai perkiraan kasar.' : '')+'</p>'+
+    (f.notes ? '<p class="kecil" style="margin-top:6px">💡 '+esc(f.notes)+'</p>' : '')+
+    '<div class="grid g2" style="margin-top:10px">'+
+      '<div class="ruas"><label class="f">Masuk ke</label><select id="fmKat">'+
+        Object.keys(KATEGORI).map(function(k){
+          return '<option value="'+k+'"'+(k===kategoriOtomatis()?' selected':'')+'>'+KATEGORI[k]+'</option>';
+        }).join('')+'</select></div>'+
+      '<div class="ruas"><label class="f">Jumlah porsi</label>'+
+        '<input type="number" id="fmJml" value="1" min="0.25" step="0.25"></div>'+
+    '</div>'+
+    '<button class="b penuh" onclick="catatDariFoto(\''+jsq(f.id||'')+'\')">Catat ke Jurnal Makan</button>'+
+    '<p class="kecil" style="margin-top:7px">Angka ini perkiraan AI dari sebuah foto, bukan hasil pengukuran. Sesuaikan porsinya bila piringmu lebih besar atau lebih kecil.</p>'+
+  '</div>';
+}
+
+function catatDariFoto(id){
+  var m=(S.makanan||[]).filter(function(x){ return x.id===id; })[0];
+  if(!m) return toast('Data makanan tidak ditemukan. Coba analisis ulang fotonya.','err');
+  var kat=document.getElementById('fmKat').value;
+  var qty=n(document.getElementById('fmJml').value,1) || 1;
+  var rec={id:idBaru('ml'), date:hariIni(), category:kat, quantity:qty, loggedAt:jamKini(), foodItem:m};
+  fotoMakanTerakhir=null;
+  ubah('catat_makan', rec, function(){
+    S.catatanMakan = S.catatanMakan||[];
+    S.catatanMakan.push(rec);
+    S.profil.userXp = n(S.profil.userXp)+10;
+    S.profil.userLevel = Math.floor(n(S.profil.userXp)/500)+1;
+  });
+  toast(m.name+' dicatat · '+rb(n(m.calories)*qty)+' kkal','ok');
 }
 
 function modalPilihPorsi(id){
@@ -857,70 +1027,348 @@ function simpanMakananBaru(){
    TAB 3 — PETA WORKOUT
    ================================================================ */
 var ruteTerpilih=null, petaObj=null, lapisanRute=null, penandaSaya=null, idWatch=null;
+var modeEditJalur=false, jalurDraft=[], lapisanDraft=null, penandaDraft=[];
+
+function ruteAktif(){
+  var rute=S.rute||[];
+  return rute.filter(function(x){ return x.id===ruteTerpilih; })[0] || rute[0] || null;
+}
+
+/** Menyeragamkan bentuk waypoint: dukung [lat,lng] maupun {lat,lng,label}. */
+function titikRute(r){
+  return ((r&&r.waypoints)||[]).map(function(w){
+    return Array.isArray(w)
+      ? {lat:n(w[0]), lng:n(w[1]), label:''}
+      : {lat:n(w.lat), lng:n(w.lng), label:(w.label||'')};
+  }).filter(function(t){ return t.lat || t.lng; });
+}
 
 function viewPeta(){
   var rute=S.rute||[];
   if(!ruteTerpilih && rute.length) ruteTerpilih=rute[0].id;
-  var r=rute.filter(function(x){ return x.id===ruteTerpilih; })[0] || rute[0];
+  var r=ruteAktif();
 
-  var h='<div class="kartu rapat"><div class="baris wrap" style="gap:7px">'+
-      rute.map(function(x){
-        return '<button class="b kecilb '+(x.id===ruteTerpilih?'':'garis')+'" onclick="pilihRute(\''+jsq(x.id)+'\')">'+esc(x.name)+'</button>';
-      }).join('')+
-    '</div></div>';
+  var h='<div class="kartu rapat">'+
+      '<div class="baris rata" style="margin-bottom:9px">'+
+        '<h3>Daftar Rute <span class="kecil">('+rute.length+')</span></h3>'+
+        '<button class="b kecilb" onclick="modalRute()">+ Rute Baru</button>'+
+      '</div>'+
+      (rute.length
+        ? '<div class="baris wrap" style="gap:7px">'+rute.map(function(x){
+            return '<button class="b kecilb '+(r&&x.id===r.id?'':'garis')+'" onclick="pilihRute(\''+jsq(x.id)+'\')">'+esc(x.name)+'</button>';
+          }).join('')+'</div>'
+        : '<p class="kecil">Belum ada rute tersimpan. Tekan <b>+ Rute Baru</b> untuk membuat rute pertamamu, lalu gambar jalurnya langsung di peta.</p>')+
+    '</div>';
 
   if(r){
+    var tk=titikRute(r);
     h+='<div class="kartu">'+
-        '<div class="baris rata"><h3>'+esc(r.name)+'</h3><span class="chip '+(r.difficulty==='Tantangan'?'merah':(r.difficulty==='Sedang'?'oranye':''))+'">'+esc(r.difficulty)+'</span></div>'+
-        '<p class="kecil">📍 '+esc(r.locationName)+'</p>'+
+        '<div class="baris rata"><h3>'+esc(r.name)+'</h3>'+
+          '<span class="chip '+(r.difficulty==='Tantangan'?'merah':(r.difficulty==='Sedang'?'oranye':''))+'">'+esc(r.difficulty||'Mudah')+'</span></div>'+
+        '<p class="kecil">📍 '+esc(r.locationName||'Lokasi belum diisi')+'</p>';
+
+    if(modeEditJalur){
+      h+='<div class="kotak-edit">✏️ <b>Mode ubah jalur aktif.</b> Ketuk peta untuk menambah titik, ketuk sebuah titik untuk menghapusnya.<br>'+
+          'Titik: <b id="jmlTitik">'+jalurDraft.length+'</b> · Perkiraan jarak: <b id="jarakDraft">'+panjangDraft().toFixed(2)+'</b> km</div>'+
         '<div id="peta"></div>'+
+        '<div class="baris wrap" style="gap:8px; margin-top:10px">'+
+          '<button class="b" onclick="simpanJalur()">💾 Simpan Jalur</button>'+
+          '<button class="b garis" onclick="undoTitik()">↩️ Batal 1 Titik</button>'+
+          '<button class="b garis" onclick="kosongkanJalur()">🧹 Kosongkan</button>'+
+          '<button class="b garis" onclick="titikDariGps()">📍 Titik dari GPS</button>'+
+          '<button class="b abu" onclick="batalEditJalur()">Keluar</button>'+
+        '</div>';
+    } else {
+      h+='<div id="peta"></div>'+
         '<div class="grid g4" style="margin-top:11px">'+
           kartuStat('Jarak', n(r.distanceKm)+' km')+
           kartuStat('Estimasi', n(r.estimatedMinutes)+' mnt')+
           kartuStat('Kalori', rb(r.caloriesBurned))+
-          kartuStat('Tipe', esc(r.type))+
+          kartuStat('Titik', tk.length)+
         '</div>'+
-        '<p class="kecil" style="margin-top:10px">'+esc(r.description)+'</p>'+
-        '<div class="baris wrap" style="gap:8px">'+
+        (r.description ? '<p class="kecil" style="margin-top:10px">'+esc(r.description)+'</p>' : '')+
+        '<div class="baris wrap" style="gap:8px; margin-top:10px">'+
           '<button class="b" id="btnLacak" onclick="toggleLacak()">▶️ Mulai Lacak GPS</button>'+
           '<button class="b garis" onclick="jadwalkanRute(\''+jsq(r.id)+'\')">📅 Jadwalkan</button>'+
         '</div>'+
-        '<div id="infoLacak" class="kecil" style="margin-top:9px"></div>'+
-      '</div>';
-  } else {
-    h+='<div class="kartu kosong"><span class="ik">🗺️</span>Belum ada rute tersimpan.</div>';
+        '<div class="baris wrap" style="gap:8px; margin-top:8px">'+
+          '<button class="b garis" onclick="modalRute(\''+jsq(r.id)+'\')">✏️ Ubah Data</button>'+
+          '<button class="b garis" onclick="mulaiEditJalur()">🧭 Ubah Jalur di Peta</button>'+
+          '<button class="b garis" onclick="hapusRute(\''+jsq(r.id)+'\')">🗑 Hapus Rute</button>'+
+        '</div>'+
+        '<div id="infoLacak" class="kecil" style="margin-top:9px"></div>';
+    }
+    h+='</div>';
   }
   return h;
 }
 
-function pilihRute(id){ ruteTerpilih=id; render(); }
+function pilihRute(id){
+  if(modeEditJalur) return toast('Selesaikan atau keluar dari mode ubah jalur dulu','info');
+  ruteTerpilih=id; render();
+}
 
 function sesudah_peta(){
-  var r=(S.rute||[]).filter(function(x){ return x.id===ruteTerpilih; })[0];
-  if(!r) return;
+  var r=ruteAktif(); if(!r) return;
   muatLeaflet(function(ok){
     var el=document.getElementById('peta'); if(!el) return;
+
     if(!ok){
-      el.innerHTML='<div class="kosong" style="padding:60px 16px"><span class="ik">🗺️</span>'+
-        'Peta butuh koneksi internet.<br><span class="kecil">Detail rute tetap bisa dibaca di bawah.</span></div>';
+      var daftar=titikRute(r).map(function(t,i){
+        return (i+1)+'. '+t.lat.toFixed(5)+', '+t.lng.toFixed(5)+(t.label?(' — '+esc(t.label)):'');
+      }).join('<br>');
+      el.innerHTML='<div class="kosong" style="padding:34px 16px"><span class="ik">🗺️</span>'+
+        'Peta butuh koneksi internet.'+
+        (daftar ? '<div class="kecil" style="margin-top:10px; text-align:left; line-height:1.7">'+daftar+'</div>'
+                : '<div class="kecil" style="margin-top:8px">Rute ini belum punya titik jalur.</div>')+
+        '</div>';
       return;
     }
+
     try{
-      if(petaObj){ petaObj.remove(); petaObj=null; }
-      petaObj=L.map(el,{zoomControl:true}).setView([r.center.lat, r.center.lng], 15);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19, attribution:'© OpenStreetMap'}).addTo(petaObj);
-      var titik=(r.waypoints||[]).map(function(w){ return Array.isArray(w)?[w[0],w[1]]:[w.lat,w.lng]; });
-      if(titik.length>1){
-        lapisanRute=L.polyline(titik,{color:'#059669', weight:5, opacity:.85}).addTo(petaObj);
+      if(petaObj){ petaObj.remove(); }
+      petaObj=null; lapisanRute=null; lapisanDraft=null; penandaSaya=null; penandaDraft=[];
+
+      var tk = modeEditJalur ? jalurDraft : titikRute(r);
+      var pusat = tk.length
+        ? [tk[0].lat, tk[0].lng]
+        : [n(r.center&&r.center.lat, -6.2), n(r.center&&r.center.lng, 106.8)];
+
+      petaObj=L.map(el,{zoomControl:true}).setView(pusat, 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        {maxZoom:19, attribution:'© OpenStreetMap'}).addTo(petaObj);
+
+      if(modeEditJalur){
+        el.classList.add('menggambar');
+        petaObj.on('click', function(e){ tambahTitik(e.latlng.lat, e.latlng.lng); });
+        gambarDraft();
+        if(tk.length>1) petaObj.fitBounds(L.latLngBounds(tk.map(function(t){return [t.lat,t.lng];})),{padding:[30,30]});
+      } else if(tk.length>1){
+        lapisanRute=L.polyline(tk.map(function(t){ return [t.lat,t.lng]; }),
+          {color:'#059669', weight:5, opacity:.85}).addTo(petaObj);
         petaObj.fitBounds(lapisanRute.getBounds(),{padding:[28,28]});
-        L.marker(titik[0]).addTo(petaObj).bindPopup('Start');
-        L.marker(titik[titik.length-1]).addTo(petaObj).bindPopup('Finish');
+        L.marker([tk[0].lat,tk[0].lng]).addTo(petaObj).bindPopup('Start');
+        L.marker([tk[tk.length-1].lat,tk[tk.length-1].lng]).addTo(petaObj).bindPopup('Finish');
+      } else if(tk.length===1){
+        L.marker([tk[0].lat,tk[0].lng]).addTo(petaObj).bindPopup(esc(r.name));
       }
-      setTimeout(function(){ petaObj.invalidateSize(); }, 220);
+
+      setTimeout(function(){ if(petaObj) petaObj.invalidateSize(); }, 220);
     }catch(e){
       el.innerHTML='<div class="kosong">Gagal memuat peta: '+esc(e.message)+'</div>';
     }
   });
+}
+
+/* ---------------- Menggambar & mengubah jalur di atas peta ---------------- */
+
+function mulaiEditJalur(){
+  var r=ruteAktif(); if(!r) return;
+  jalurDraft=titikRute(r);
+  modeEditJalur=true;
+  render();
+  toast('Ketuk peta untuk menambah titik jalur','info');
+}
+
+function batalEditJalur(){
+  modeEditJalur=false; jalurDraft=[]; render();
+}
+
+function tambahTitik(la, ln){
+  jalurDraft.push({lat:la, lng:ln, label:''});
+  gambarDraft(); perbaruiInfoDraft();
+}
+
+function hapusTitik(i){
+  jalurDraft.splice(i,1);
+  gambarDraft(); perbaruiInfoDraft();
+  toast('Titik '+(i+1)+' dihapus','info');
+}
+
+function undoTitik(){
+  if(!jalurDraft.length) return toast('Belum ada titik','info');
+  jalurDraft.pop(); gambarDraft(); perbaruiInfoDraft();
+}
+
+function kosongkanJalur(){
+  if(!jalurDraft.length) return;
+  jalurDraft=[]; gambarDraft(); perbaruiInfoDraft();
+  toast('Semua titik dikosongkan','info');
+}
+
+function titikDariGps(){
+  if(!navigator.geolocation) return toast('Perangkat tidak mendukung GPS','err');
+  toast('Mengambil lokasi…','info');
+  navigator.geolocation.getCurrentPosition(function(pos){
+    tambahTitik(pos.coords.latitude, pos.coords.longitude);
+    if(petaObj) petaObj.setView([pos.coords.latitude, pos.coords.longitude], 17);
+    toast('Titik lokasimu ditambahkan','ok');
+  }, function(e){
+    toast('GPS gagal: '+e.message,'err');
+  }, {enableHighAccuracy:true, timeout:15000});
+}
+
+function panjangDraft(){
+  var t=0;
+  for(var i=1;i<jalurDraft.length;i++){
+    t+=jarakKm(jalurDraft[i-1].lat, jalurDraft[i-1].lng, jalurDraft[i].lat, jalurDraft[i].lng);
+  }
+  return t;
+}
+
+function perbaruiInfoDraft(){
+  var a=document.getElementById('jmlTitik'), b=document.getElementById('jarakDraft');
+  if(a) a.textContent=jalurDraft.length;
+  if(b) b.textContent=panjangDraft().toFixed(2);
+}
+
+function gambarDraft(){
+  if(!petaObj || !window.L) return;
+  if(lapisanDraft){ petaObj.removeLayer(lapisanDraft); lapisanDraft=null; }
+  penandaDraft.forEach(function(m){ petaObj.removeLayer(m); });
+  penandaDraft=[];
+
+  var ll=jalurDraft.map(function(t){ return [t.lat,t.lng]; });
+  if(ll.length>1){
+    lapisanDraft=L.polyline(ll,{color:'#0ea5e9', weight:5, opacity:.9, dashArray:'7 6'}).addTo(petaObj);
+  }
+  jalurDraft.forEach(function(t,i){
+    var m=L.circleMarker([t.lat,t.lng],
+      {radius:8, color:'#0ea5e9', fillColor:'#ffffff', fillOpacity:1, weight:3}).addTo(petaObj);
+    m.bindTooltip(String(i+1),{permanent:true, direction:'top', offset:[0,-6], className:'tt-titik'});
+    m.on('click', function(ev){
+      if(ev.originalEvent && ev.originalEvent.stopPropagation) ev.originalEvent.stopPropagation();
+      if(L.DomEvent && ev.originalEvent) L.DomEvent.stop(ev.originalEvent);
+      hapusTitik(i);
+    });
+    penandaDraft.push(m);
+  });
+}
+
+function simpanJalur(){
+  var r=ruteAktif(); if(!r) return;
+  if(jalurDraft.length<2) return toast('Butuh minimal 2 titik untuk membentuk jalur','err');
+
+  var jarak=Math.round(panjangDraft()*100)/100;
+  var sepeda=(r.type==='Bersepeda');
+  var menit=Math.round(jarak*(sepeda?3.5:9));
+  var kal=Math.round(jarak*n(S.profil.weightKg,70)*(sepeda?0.45:1.036));
+  var titik=jalurDraft.slice();
+
+  var data={
+    id:r.id, name:r.name, locationName:r.locationName, type:r.type,
+    difficulty:r.difficulty, description:r.description,
+    distanceKm:jarak, estimatedMinutes:menit, caloriesBurned:kal,
+    center:{lat:titik[0].lat, lng:titik[0].lng}, waypoints:titik
+  };
+
+  modeEditJalur=false; jalurDraft=[];
+  ubah('rute_simpan', data, function(){
+    r.waypoints=titik; r.distanceKm=jarak; r.estimatedMinutes=menit;
+    r.caloriesBurned=kal; r.center=data.center;
+  });
+  toast('Jalur tersimpan · '+jarak.toFixed(2)+' km, ~'+menit+' menit','ok');
+}
+
+/* ---------------- Membuat & mengubah data rute ---------------- */
+
+function modalRute(id){
+  var r=id ? (S.rute||[]).filter(function(x){ return x.id===id; })[0] : null;
+  var baru=!r; r=r||{};
+  var tipe=['Lari','Bersepeda','Jalan Santai'];
+  var tingkat=['Mudah','Sedang','Tantangan'];
+  var c=r.center||{};
+
+  bukaModal(baru?'Rute Baru':'Ubah Data Rute',
+    '<input type="hidden" id="rtId" value="'+esc(r.id||'')+'">'+
+    '<div class="ruas"><label class="f">Nama rute</label>'+
+      '<input id="rtNama" value="'+esc(r.name||'')+'" placeholder="mis. Loop Taman Dadaha"></div>'+
+    '<div class="ruas"><label class="f">Lokasi</label>'+
+      '<input id="rtLokasi" value="'+esc(r.locationName||'')+'" placeholder="mis. Taman Dadaha, Tasikmalaya"></div>'+
+    '<div class="grid g2">'+
+      '<div class="ruas"><label class="f">Tipe</label><select id="rtTipe">'+
+        tipe.map(function(t){ return '<option'+(r.type===t?' selected':'')+'>'+t+'</option>'; }).join('')+'</select></div>'+
+      '<div class="ruas"><label class="f">Tingkat</label><select id="rtTingkat">'+
+        tingkat.map(function(t){ return '<option'+(r.difficulty===t?' selected':'')+'>'+t+'</option>'; }).join('')+'</select></div>'+
+      '<div class="ruas"><label class="f">Jarak (km)</label>'+
+        '<input type="number" step="0.01" id="rtJarak" value="'+n(r.distanceKm)+'"></div>'+
+      '<div class="ruas"><label class="f">Estimasi (menit)</label>'+
+        '<input type="number" id="rtMenit" value="'+n(r.estimatedMinutes)+'"></div>'+
+      '<div class="ruas"><label class="f">Titik pusat — lintang</label>'+
+        '<input id="rtLat" value="'+esc(c.lat!==undefined&&c.lat!==''?String(c.lat):'')+'" placeholder="-7.3274"></div>'+
+      '<div class="ruas"><label class="f">Titik pusat — bujur</label>'+
+        '<input id="rtLng" value="'+esc(c.lng!==undefined&&c.lng!==''?String(c.lng):'')+'" placeholder="108.2207"></div>'+
+    '</div>'+
+    '<button class="b garis penuh" onclick="isiLokasiSaya()">📍 Pakai Lokasi Saya Sekarang</button>'+
+    '<div class="ruas" style="margin-top:13px"><label class="f">Deskripsi</label>'+
+      '<input id="rtDesk" value="'+esc(r.description||'')+'" placeholder="Lintasan datar, rindang, cocok pagi hari"></div>'+
+    '<p class="kecil">Jarak dan kalori akan dihitung ulang otomatis begitu kamu menggambar jalurnya lewat tombol <b>Ubah Jalur di Peta</b>.</p>'+
+    '<button class="b penuh" onclick="simpanRute()">'+(baru?'Buat Rute':'Simpan Perubahan')+'</button>'
+  );
+}
+
+function isiLokasiSaya(){
+  if(!navigator.geolocation) return toast('Perangkat tidak mendukung GPS','err');
+  toast('Mengambil lokasi…','info');
+  navigator.geolocation.getCurrentPosition(function(pos){
+    var a=document.getElementById('rtLat'), b=document.getElementById('rtLng');
+    if(a) a.value=pos.coords.latitude.toFixed(6);
+    if(b) b.value=pos.coords.longitude.toFixed(6);
+    toast('Koordinat terisi dari GPS','ok');
+  }, function(e){
+    toast('GPS gagal: '+e.message,'err');
+  }, {enableHighAccuracy:true, timeout:15000});
+}
+
+function simpanRute(){
+  var id=document.getElementById('rtId').value;
+  var lama=id ? (S.rute||[]).filter(function(x){ return x.id===id; })[0] : null;
+
+  var lat=parseFloat(document.getElementById('rtLat').value);
+  var lng=parseFloat(document.getElementById('rtLng').value);
+  if(isNaN(lat)) lat = (lama&&lama.center) ? n(lama.center.lat,-6.2) : -6.2;
+  if(isNaN(lng)) lng = (lama&&lama.center) ? n(lama.center.lng,106.8) : 106.8;
+
+  var data={
+    id: id || idBaru('rt'),
+    name: document.getElementById('rtNama').value.trim() || 'Rute Baru',
+    locationName: document.getElementById('rtLokasi').value.trim(),
+    type: document.getElementById('rtTipe').value,
+    difficulty: document.getElementById('rtTingkat').value,
+    distanceKm: n(document.getElementById('rtJarak').value),
+    estimatedMinutes: n(document.getElementById('rtMenit').value),
+    caloriesBurned: lama ? n(lama.caloriesBurned) : 0,
+    description: document.getElementById('rtDesk').value.trim(),
+    center: {lat:lat, lng:lng},
+    waypoints: lama ? titikRute(lama) : [{lat:lat, lng:lng, label:'Start'}]
+  };
+
+  var sepeda=(data.type==='Bersepeda');
+  if(!data.estimatedMinutes && data.distanceKm) data.estimatedMinutes=Math.round(data.distanceKm*(sepeda?3.5:9));
+  if(!data.caloriesBurned && data.distanceKm){
+    data.caloriesBurned=Math.round(data.distanceKm*n(S.profil.weightKg,70)*(sepeda?0.45:1.036));
+  }
+
+  tutupModal();
+  ruteTerpilih=data.id;
+  ubah('rute_simpan', data, function(){
+    S.rute=S.rute||[];
+    var i=-1;
+    for(var k=0;k<S.rute.length;k++) if(S.rute[k].id===data.id) i=k;
+    if(i>=0) S.rute[i]=data; else S.rute.push(data);
+  });
+  toast(id?'Rute diperbarui':'Rute baru dibuat. Gambar jalurnya lewat “Ubah Jalur di Peta”.','ok');
+}
+
+function hapusRute(id){
+  var r=(S.rute||[]).filter(function(x){ return x.id===id; })[0];
+  if(!r) return;
+  if(!confirm('Hapus rute "'+r.name+'"? Tindakan ini tidak bisa dibatalkan.')) return;
+  ubah('rute_hapus', {id:id}, function(){
+    S.rute=(S.rute||[]).filter(function(x){ return x.id!==id; });
+    if(ruteTerpilih===id) ruteTerpilih=(S.rute[0]||{}).id||null;
+  });
+  toast('Rute dihapus','ok');
 }
 
 function muatLeaflet(cb){
@@ -1318,16 +1766,240 @@ function viewWearable(){
     '<button class="b garis penuh" style="margin-top:11px" onclick="modalAktivitas()">Perbarui Data Aktivitas</button></div>';
 
   /* perangkat */
-  h+='<div class="kartu"><h3>Perangkat Tersambung</h3>'+
-    (S.perangkat||[]).map(function(d){
-      return '<div class="item"><div class="emo">⌚</div>'+
-        '<div class="tumbuh"><div style="font-weight:600; font-size:14px">'+esc(d.name)+'</div>'+
-        '<div class="kecil">'+esc(d.brand)+' · baterai '+n(d.batteryLevel)+'%</div></div>'+
-        '<span class="chip '+(d.connected?'':'abu')+'">'+(d.connected?'Terhubung':'Terputus')+'</span></div>';
-    }).join('')+
-    '<p class="kecil" style="margin-top:9px">Sinkronisasi otomatis dengan perangkat memerlukan aplikasi resmi masing-masing merek. Di sini data dapat dimasukkan manual atau lewat simulasi pemantauan.</p></div>';
+  h+='<div class="kartu">'+
+    '<div class="baris rata"><h3>Perangkat Wearable <span class="kecil">('+((S.perangkat||[]).length)+')</span></h3>'+
+      '<button class="b kecilb" onclick="modalPerangkat()">+ Tambah</button></div>'+
+    ((S.perangkat||[]).length
+      ? (S.perangkat||[]).map(function(d){
+          return '<div class="kartu rapat" style="margin-top:9px">'+
+            '<div class="baris rata">'+
+              '<div class="emo">'+ikonMerek(d.brand)+'</div>'+
+              '<div class="tumbuh">'+
+                '<div style="font-weight:600; font-size:14px">'+esc(d.name)+'</div>'+
+                '<div class="kecil">'+esc(d.brand||'Lainnya')+' · baterai '+n(d.batteryLevel)+'% · '+esc(d.lastSyncedAt||'-')+'</div>'+
+              '</div>'+
+              '<span class="chip '+(d.connected?'':'abu')+'">'+(d.connected?'Terhubung':'Terputus')+'</span>'+
+            '</div>'+
+            '<div class="baris wrap" style="gap:7px; margin-top:9px">'+
+              '<button class="b kecilb garis" onclick="toggleSambung(\''+jsq(d.id)+'\')">'+(d.connected?'Putuskan':'Sambungkan')+'</button>'+
+              '<button class="b kecilb garis" onclick="modalPerangkat(\''+jsq(d.id)+'\')">Ubah</button>'+
+              '<button class="b kecilb garis" onclick="hapusPerangkat(\''+jsq(d.id)+'\')">Hapus</button>'+
+            '</div>'+
+          '</div>';
+        }).join('')
+      : '<p class="kecil">Belum ada perangkat terdaftar. Tambahkan dari katalog, atau pindai lewat Bluetooth.</p>')+
+    '<div class="baris wrap" style="gap:8px; margin-top:12px">'+
+      '<button class="b garis" onclick="pindaiBluetooth(false)">🔎 Pindai Perangkat Detak Jantung</button>'+
+      '<button class="b garis" onclick="pindaiBluetooth(true)">📡 Tampilkan Semua Bluetooth</button>'+
+    '</div>'+
+    '<p class="kecil" style="margin-top:10px">Pemindaian mencari perangkat yang menyiarkan layanan <b>Heart Rate</b> standar — kebanyakan chest strap dan sebagian smartband mendukungnya, dan detaknya akan langsung mengisi angka besar di atas. Perangkat yang mengunci datanya di aplikasi resmi (Galaxy Fit 3 lewat Samsung Health, Apple Watch lewat Health, Mi Band lewat Mi Fitness) tidak akan muncul: daftarkan manual dari katalog, lalu masukkan angkanya lewat <b>Catat Manual</b>.</p>'+
+    '<p class="kecil">Web Bluetooth hanya berjalan di Chrome atau Edge melalui alamat HTTPS. Bila kamu membuka aplikasi ini lewat tautan Apps Script, gunakan versi GitHub Pages agar tombol pindai berfungsi.</p>'+
+  '</div>';
 
   return h;
+}
+
+/* ---------------- Katalog & pengelolaan perangkat ---------------- */
+
+var KATALOG_WEARABLE=[
+  {nama:'Samsung Galaxy Fit 3',       merek:'Samsung'},
+  {nama:'Samsung Galaxy Watch 7',     merek:'Samsung'},
+  {nama:'Samsung Galaxy Watch FE',    merek:'Samsung'},
+  {nama:'Apple Watch Series 10',      merek:'Apple Watch'},
+  {nama:'Apple Watch SE (gen 2)',     merek:'Apple Watch'},
+  {nama:'Xiaomi Smart Band 9',        merek:'Xiaomi'},
+  {nama:'Xiaomi Watch S4',            merek:'Xiaomi'},
+  {nama:'Huawei Band 9',              merek:'Huawei'},
+  {nama:'Huawei Watch GT 5',          merek:'Huawei'},
+  {nama:'Garmin Forerunner 265',      merek:'Garmin'},
+  {nama:'Garmin Venu 3',              merek:'Garmin'},
+  {nama:'Fitbit Charge 6',            merek:'Fitbit'},
+  {nama:'Fitbit Inspire 3',           merek:'Fitbit'},
+  {nama:'Amazfit Bip 6',              merek:'Amazfit'},
+  {nama:'Amazfit GTR 4',              merek:'Amazfit'},
+  {nama:'Honor Band 9',               merek:'Honor'},
+  {nama:'OPPO Band 2',                merek:'OPPO'},
+  {nama:'realme Band 2',              merek:'realme'},
+  {nama:'Polar H10 (chest strap)',    merek:'Polar'},
+  {nama:'Coospo H808S (chest strap)', merek:'Coospo'}
+];
+
+function ikonMerek(m){
+  m=String(m||'').toLowerCase();
+  if(m.indexOf('apple')>=0) return '🍏';
+  if(m.indexOf('samsung')>=0 || m.indexOf('galaxy')>=0) return '🔵';
+  if(m.indexOf('garmin')>=0) return '🧭';
+  if(m.indexOf('fitbit')>=0) return '💠';
+  if(m.indexOf('xiaomi')>=0 || m.indexOf('mi ')>=0) return '🟠';
+  if(m.indexOf('huawei')>=0 || m.indexOf('honor')>=0) return '🌸';
+  if(m.indexOf('amazfit')>=0) return '⚡';
+  if(m.indexOf('polar')>=0 || m.indexOf('coospo')>=0) return '❤️';
+  return '⌚';
+}
+
+function modalPerangkat(id){
+  var d=id ? (S.perangkat||[]).filter(function(x){ return x.id===id; })[0] : null;
+  var baru=!d; d=d||{};
+  bukaModal(baru?'Tambah Perangkat':'Ubah Perangkat',
+    (baru
+      ? '<div class="ruas"><label class="f">Pilih dari katalog</label>'+
+          '<select id="dvKatalog" onchange="isiDariKatalog()">'+
+            '<option value="">— Ketik sendiri —</option>'+
+            KATALOG_WEARABLE.map(function(k,i){ return '<option value="'+i+'">'+esc(k.nama)+'</option>'; }).join('')+
+          '</select></div>'
+      : '')+
+    '<div class="ruas"><label class="f">Nama perangkat</label>'+
+      '<input id="dvNama" value="'+esc(d.name||'')+'" placeholder="mis. Samsung Galaxy Fit 3"></div>'+
+    '<div class="ruas"><label class="f">Merek</label>'+
+      '<input id="dvMerek" value="'+esc(d.brand||'')+'" placeholder="mis. Samsung"></div>'+
+    '<div class="grid g2">'+
+      '<div class="ruas"><label class="f">Baterai (%)</label>'+
+        '<input type="number" id="dvBaterai" min="0" max="100" value="'+n(d.batteryLevel,80)+'"></div>'+
+      '<div class="ruas"><label class="f">Status</label><select id="dvStatus">'+
+        '<option value="ya"'+(d.connected?' selected':'')+'>Terhubung</option>'+
+        '<option value="tidak"'+(d.connected?'':' selected')+'>Terputus</option>'+
+      '</select></div>'+
+    '</div>'+
+    '<button class="b penuh" onclick="simpanPerangkat(\''+jsq(d.id||'')+'\')">'+(baru?'Tambahkan':'Simpan Perubahan')+'</button>'
+  );
+}
+
+function isiDariKatalog(){
+  var s=document.getElementById('dvKatalog'); if(!s || s.value==='') return;
+  var k=KATALOG_WEARABLE[n(s.value)]; if(!k) return;
+  document.getElementById('dvNama').value=k.nama;
+  document.getElementById('dvMerek').value=k.merek;
+}
+
+function simpanPerangkat(id){
+  var d={
+    id: id || idBaru('dev'),
+    name: document.getElementById('dvNama').value.trim() || 'Perangkat Baru',
+    brand: document.getElementById('dvMerek').value.trim() || 'Lainnya',
+    batteryLevel: n(document.getElementById('dvBaterai').value,80),
+    connected: document.getElementById('dvStatus').value==='ya',
+    lastSyncedAt: 'Baru saja'
+  };
+  tutupModal();
+  terapkanPerangkat(d);
+  toast(id?'Perangkat diperbarui':'Perangkat ditambahkan','ok');
+}
+
+/** Menyimpan satu perangkat ke Sheets sekaligus memperbarui salinan lokalnya. */
+function terapkanPerangkat(d){
+  ubah('perangkat_simpan', d, function(){
+    S.perangkat=S.perangkat||[];
+    var i=-1;
+    for(var k=0;k<S.perangkat.length;k++) if(S.perangkat[k].id===d.id) i=k;
+    if(i>=0) S.perangkat[i]=d; else S.perangkat.push(d);
+  });
+}
+
+function toggleSambung(id){
+  var d=(S.perangkat||[]).filter(function(x){ return x.id===id; })[0]; if(!d) return;
+  var baru={id:d.id, name:d.name, brand:d.brand, batteryLevel:n(d.batteryLevel),
+            connected:!d.connected, lastSyncedAt:'Baru saja'};
+  terapkanPerangkat(baru);
+  toast(baru.connected ? ('Tersambung ke '+d.name) : ('Diputuskan dari '+d.name), baru.connected?'ok':'info');
+}
+
+function hapusPerangkat(id){
+  var d=(S.perangkat||[]).filter(function(x){ return x.id===id; })[0]; if(!d) return;
+  if(!confirm('Hapus perangkat "'+d.name+'" dari daftar?')) return;
+  ubah('perangkat_hapus', {id:id}, function(){
+    S.perangkat=(S.perangkat||[]).filter(function(x){ return x.id!==id; });
+  });
+  toast('Perangkat dihapus','ok');
+}
+
+/* ---------------- Pemindaian Bluetooth (Web Bluetooth API) ---------------- */
+
+var btPerangkat=null, btKarakteristik=null, bpmTerakhirRender=0;
+
+function pindaiBluetooth(semua){
+  if(!navigator.bluetooth){
+    return toast('Peramban ini belum mendukung Web Bluetooth. Gunakan Chrome atau Edge di Android maupun desktop.','err');
+  }
+  var opsi = semua
+    ? {acceptAllDevices:true, optionalServices:['heart_rate','battery_service','device_information']}
+    : {filters:[{services:['heart_rate']}], optionalServices:['battery_service','device_information']};
+
+  toast('Membuka daftar perangkat Bluetooth…','info');
+
+  navigator.bluetooth.requestDevice(opsi).then(function(dev){
+    btPerangkat=dev;
+    dev.addEventListener('gattserverdisconnected', function(){
+      toast((dev.name||'Perangkat')+' terputus','info');
+      var d=(S.perangkat||[]).filter(function(x){ return x.name===(dev.name||''); })[0];
+      if(d && d.connected){
+        terapkanPerangkat({id:d.id, name:d.name, brand:d.brand, batteryLevel:n(d.batteryLevel),
+                           connected:false, lastSyncedAt:'Terputus'});
+      }
+    });
+    return dev.gatt.connect().then(function(server){
+      var nama=dev.name||'Perangkat Bluetooth';
+      var sudah=(S.perangkat||[]).filter(function(x){ return x.name===nama; })[0];
+      var rec={
+        id: sudah ? sudah.id : idBaru('dev'),
+        name: nama, brand: tebakMerek(nama), batteryLevel: 0,
+        connected: true, lastSyncedAt: jamKini()
+      };
+      return bacaBaterai(server).then(function(b){
+        rec.batteryLevel=b;
+        terapkanPerangkat(rec);
+        toast('Tersambung ke '+nama,'ok');
+        return pasangDetak(server);
+      });
+    });
+  }).catch(function(e){
+    var nama=(e && e.name) ? e.name : '';
+    if(nama==='NotFoundError') return toast('Tidak ada perangkat yang dipilih','info');
+    if(nama==='SecurityError') return toast('Bluetooth diblokir di halaman ini. Buka versi GitHub Pages (HTTPS) untuk memakainya.','err');
+    toast('Bluetooth gagal: '+((e&&e.message)?e.message:e),'err');
+  });
+}
+
+function bacaBaterai(server){
+  return server.getPrimaryService('battery_service')
+    .then(function(s){ return s.getCharacteristic('battery_level'); })
+    .then(function(c){ return c.readValue(); })
+    .then(function(v){ return v.getUint8(0); })
+    .catch(function(){ return 0; });
+}
+
+function pasangDetak(server){
+  return server.getPrimaryService('heart_rate')
+    .then(function(s){ return s.getCharacteristic('heart_rate_measurement'); })
+    .then(function(c){ btKarakteristik=c; return c.startNotifications(); })
+    .then(function(c){
+      c.addEventListener('characteristicvaluechanged', terimaDetak);
+      toast('Detak jantung langsung dari perangkat kini aktif','ok');
+    })
+    .catch(function(){
+      toast('Perangkat tersambung, tetapi tidak menyiarkan detak jantung standar. Pakai “Catat Manual”.','info');
+    });
+}
+
+/** Bit pertama pada flag menentukan apakah nilai BPM 8-bit atau 16-bit. */
+function terimaDetak(e){
+  var d=e.target.value;
+  var bendera=d.getUint8(0);
+  var bpm=(bendera & 0x01) ? d.getUint16(1, true) : d.getUint8(1);
+  if(!bpm || bpm<25 || bpm>250) return;
+  bpmKini=bpm;
+  riwayatBpm.push(bpm);
+  var kini=Date.now();
+  if(tab==='wearable' && kini-bpmTerakhirRender>1200){ bpmTerakhirRender=kini; render(); }
+}
+
+function tebakMerek(nama){
+  nama=String(nama||'').toLowerCase();
+  var peta=[['galaxy','Samsung'],['samsung','Samsung'],['apple','Apple Watch'],['garmin','Garmin'],
+            ['fitbit','Fitbit'],['mi band','Xiaomi'],['xiaomi','Xiaomi'],['redmi','Xiaomi'],
+            ['huawei','Huawei'],['honor','Honor'],['amazfit','Amazfit'],['zepp','Amazfit'],
+            ['polar','Polar'],['coospo','Coospo'],['wahoo','Wahoo'],['oppo','OPPO'],['realme','realme']];
+  for(var i=0;i<peta.length;i++) if(nama.indexOf(peta[i][0])>=0) return peta[i][1];
+  return 'Lainnya';
 }
 
 function zonaDetak(bpm, maks){
@@ -1712,6 +2384,18 @@ function mintaLaporan(){
 function modalProfil(){
   var p=S.profil||{}, d=p.turunan||{};
   bukaModal('Profil & Target',
+    '<div class="tengah" style="margin-bottom:16px">'+
+      '<div id="pfKotakFoto">'+fotoPratinjau(p.profilePictureUrl)+'</div>'+
+      '<div class="baris wrap" style="gap:7px; justify-content:center; margin-top:11px">'+
+        '<label class="b kecilb" style="cursor:pointer">📷 Kamera'+
+          '<input type="file" accept="image/*" capture="user" style="display:none" onchange="pilihFotoProfil(this)"></label>'+
+        '<label class="b kecilb garis" style="cursor:pointer">🖼️ Galeri'+
+          '<input type="file" accept="image/*" style="display:none" onchange="pilihFotoProfil(this)"></label>'+
+        '<button class="b kecilb garis" onclick="zoomFotoProfil()">🔍 Perbesar</button>'+
+        '<button class="b kecilb garis" onclick="hapusFotoProfil()">🗑 Hapus</button>'+
+      '</div>'+
+      '<p class="kecil" style="margin-top:8px">Ketuk foto untuk memperbesar. Cubit dua jari di ponsel, putar roda tetikus di komputer, ketuk dua kali untuk memperbesar cepat.</p>'+
+    '</div>'+
     '<div class="ruas"><label class="f">Nama</label><input id="pfNama" value="'+esc(p.name||'')+'"></div>'+
     '<div class="grid g2">'+
       '<div class="ruas"><label class="f">Usia</label><input type="number" id="pfUsia" value="'+n(p.age,28)+'"></div>'+
@@ -1739,6 +2423,210 @@ function modalProfil(){
       '</div></div>'+
     '<button class="b penuh" onclick="simpanProfil()">Simpan Profil</button>'
   );
+}
+
+/* ---------------- Foto profil & penampil zoom ---------------- */
+
+function fotoPratinjau(url){
+  return url
+    ? '<img src="'+esc(url)+'" class="foto-pratinjau" alt="Foto profil" onclick="zoomFotoProfil()">'
+    : '<div class="foto-pratinjau tanpa-foto">👤</div>';
+}
+
+/**
+ * Foto dipotong menjadi persegi lalu dikecilkan ke 320 px. Kualitasnya
+ * diturunkan bertahap sampai muat di satu sel Google Sheets, yang hanya
+ * sanggup menampung sekitar 50.000 karakter.
+ */
+function siapkanFotoProfil(file, cb){
+  var fr=new FileReader();
+  fr.onload=function(){
+    var img=new Image();
+    img.onload=function(){
+      var sisi=Math.min(img.width, img.height);
+      var sx=(img.width-sisi)/2, sy=(img.height-sisi)/2;
+      var c=document.createElement('canvas');
+      c.width=320; c.height=320;
+      c.getContext('2d').drawImage(img, sx, sy, sisi, sisi, 0, 0, 320, 320);
+      var q=0.72, url=c.toDataURL('image/jpeg', q);
+      while(url.length>42000 && q>0.32){ q-=0.08; url=c.toDataURL('image/jpeg', q); }
+      cb(url.length<=46000 ? url : null);
+    };
+    img.onerror=function(){ cb(null); };
+    img.src=fr.result;
+  };
+  fr.onerror=function(){ cb(null); };
+  fr.readAsDataURL(file);
+}
+
+function pilihFotoProfil(input){
+  var file=input.files && input.files[0];
+  input.value='';
+  if(!file) return;
+  toast('Menyiapkan foto…','info');
+  siapkanFotoProfil(file, function(url){
+    if(!url) return toast('Foto tidak dapat diproses. Coba gambar lain.','err');
+    var kotak=document.getElementById('pfKotakFoto');
+    if(kotak) kotak.innerHTML=fotoPratinjau(url);
+    terapkanFotoProfil(url);
+  });
+}
+
+function hapusFotoProfil(){
+  if(!(S.profil||{}).profilePictureUrl) return toast('Belum ada foto profil','info');
+  var kotak=document.getElementById('pfKotakFoto');
+  if(kotak) kotak.innerHTML=fotoPratinjau('');
+  terapkanFotoProfil('');
+}
+
+function terapkanFotoProfil(url){
+  ubah('profil_update', {profilePictureUrl:url, hitungOtomatis:false}, function(){
+    S.profil=S.profil||{};
+    S.profil.profilePictureUrl=url;
+  });
+  perbaruiAvatarHeader();
+  toast(url?'Foto profil diperbarui':'Foto profil dihapus','ok');
+}
+
+function zoomFotoProfil(){
+  var u=(S.profil||{}).profilePictureUrl;
+  if(!u) return toast('Belum ada foto profil. Ambil dulu lewat Kamera atau Galeri.','info');
+  bukaZoom(u, (S.profil.name||'Foto profil'));
+}
+
+/* ---------------- Penampil gambar yang bisa diperbesar ---------------- */
+
+var zoomState={skala:1, x:0, y:0, seret:false, mx:0, my:0, jarakAwal:0, skalaAwal:1, judul:''};
+
+function bukaZoom(url, judul){
+  if(!url) return;
+  tutupZoom();
+  zoomState={skala:1, x:0, y:0, seret:false, mx:0, my:0, jarakAwal:0, skalaAwal:1, judul:judul||''};
+
+  document.getElementById('modalHost').insertAdjacentHTML('beforeend',
+    '<div class="zoom-tirai" id="zoomTirai">'+
+      '<img id="zoomGbr" src="'+esc(url)+'" alt="'+esc(judul||'Gambar')+'">'+
+      '<div class="zoom-info" id="zoomInfo">'+esc(judul||'Gambar')+' · 100%</div>'+
+      '<button class="zoom-tutup" onclick="tutupZoom()" title="Tutup">✕</button>'+
+      '<div class="zoom-alat">'+
+        '<button onclick="zoomLangkah(-0.3)" title="Perkecil">−</button>'+
+        '<button onclick="zoomReset()" title="Kembalikan">⟲</button>'+
+        '<button onclick="zoomLangkah(0.3)" title="Perbesar">+</button>'+
+      '</div>'+
+    '</div>');
+
+  var t=document.getElementById('zoomTirai');
+  var g=document.getElementById('zoomGbr');
+
+  function cekKecil(){ if(g.naturalWidth && g.naturalWidth<700) g.classList.add('kecil'); }
+  if(g.complete) cekKecil(); else g.onload=cekKecil;
+
+  t.addEventListener('wheel', function(e){
+    e.preventDefault();
+    zoomLangkah(e.deltaY<0 ? 0.2 : -0.2);
+  }, {passive:false});
+
+  t.addEventListener('mousedown', function(e){
+    if(e.target.tagName==='BUTTON') return;
+    zoomState.seret=true;
+    zoomState.mx=e.clientX-zoomState.x;
+    zoomState.my=e.clientY-zoomState.y;
+    t.style.cursor='grabbing';
+  });
+
+  t.addEventListener('touchstart', function(e){
+    if(e.touches.length===2){
+      zoomState.jarakAwal=jarakSentuh(e.touches);
+      zoomState.skalaAwal=zoomState.skala;
+    } else if(e.touches.length===1){
+      zoomState.seret=true;
+      zoomState.mx=e.touches[0].clientX-zoomState.x;
+      zoomState.my=e.touches[0].clientY-zoomState.y;
+    }
+  }, {passive:true});
+
+  t.addEventListener('touchmove', function(e){
+    if(e.touches.length===2 && zoomState.jarakAwal){
+      e.preventDefault();
+      var rasio=jarakSentuh(e.touches)/zoomState.jarakAwal;
+      zoomState.skala=Math.min(6, Math.max(1, zoomState.skalaAwal*rasio));
+      terapkanZoom();
+    } else if(e.touches.length===1 && zoomState.seret && zoomState.skala>1){
+      e.preventDefault();
+      zoomState.x=e.touches[0].clientX-zoomState.mx;
+      zoomState.y=e.touches[0].clientY-zoomState.my;
+      terapkanZoom();
+    }
+  }, {passive:false});
+
+  t.addEventListener('touchend', function(e){
+    if(e.touches.length===0){ zoomState.seret=false; zoomState.jarakAwal=0; }
+  }, {passive:true});
+
+  g.addEventListener('dblclick', function(){
+    zoomState.skala = zoomState.skala>1 ? 1 : 2.5;
+    zoomState.x=0; zoomState.y=0;
+    terapkanZoom();
+  });
+
+  window.addEventListener('mousemove', geserZoom);
+  window.addEventListener('mouseup', lepasZoom);
+  window.addEventListener('keydown', tombolZoom);
+  document.body.style.overflow='hidden';
+  terapkanZoom();
+}
+
+function jarakSentuh(t){
+  var dx=t[0].clientX-t[1].clientX, dy=t[0].clientY-t[1].clientY;
+  return Math.sqrt(dx*dx+dy*dy);
+}
+
+function geserZoom(e){
+  if(!zoomState.seret || zoomState.skala<=1) return;
+  zoomState.x=e.clientX-zoomState.mx;
+  zoomState.y=e.clientY-zoomState.my;
+  terapkanZoom();
+}
+
+function lepasZoom(){
+  zoomState.seret=false;
+  var t=document.getElementById('zoomTirai');
+  if(t) t.style.cursor='grab';
+}
+
+function tombolZoom(e){
+  if(!document.getElementById('zoomTirai')) return;
+  if(e.key==='Escape') tutupZoom();
+  else if(e.key==='+' || e.key==='=') zoomLangkah(0.3);
+  else if(e.key==='-') zoomLangkah(-0.3);
+  else if(e.key==='0') zoomReset();
+}
+
+function zoomLangkah(d){
+  zoomState.skala=Math.min(6, Math.max(1, zoomState.skala+d));
+  if(zoomState.skala<=1){ zoomState.x=0; zoomState.y=0; }
+  terapkanZoom();
+}
+
+function zoomReset(){
+  zoomState.skala=1; zoomState.x=0; zoomState.y=0;
+  terapkanZoom();
+}
+
+function terapkanZoom(){
+  var g=document.getElementById('zoomGbr'); if(!g) return;
+  g.style.transform='translate('+zoomState.x+'px,'+zoomState.y+'px) scale('+zoomState.skala+')';
+  var i=document.getElementById('zoomInfo');
+  if(i) i.textContent=zoomState.judul+' · '+Math.round(zoomState.skala*100)+'%';
+}
+
+function tutupZoom(){
+  var t=document.getElementById('zoomTirai');
+  if(t) t.parentNode.removeChild(t);
+  window.removeEventListener('mousemove', geserZoom);
+  window.removeEventListener('mouseup', lepasZoom);
+  window.removeEventListener('keydown', tombolZoom);
+  if(!document.querySelector('.tirai')) document.body.style.overflow='';
 }
 
 function simpanProfil(){
