@@ -3194,6 +3194,59 @@ function viewAhliGizi(){
         'Saran dari asisten ini bersifat edukatif dan bukan pengganti pemeriksaan tenaga kesehatan. '+
         'Untuk kondisi medis tertentu, konsultasikan dengan dokter atau ahli gizi berlisensi.</p>'+
     '</div>';
+
+  h+='<div class="kartu">'+
+      '<div class="baris rata"><h3>Kesehatan Sambungan AI</h3>'+
+        '<button class="b kecilb garis" onclick="periksaAi()">🩺 Periksa</button></div>'+
+      '<p class="kecil">Bila fitur AI sering gagal, jalankan pemeriksaan ini. Aplikasi akan menghubungi tiap model Gemini satu per satu dan melaporkan mana yang menjawab beserta sebab kegagalannya.</p>'+
+      '<div id="hasilDiagnosaAi"></div>'+
+    '</div>';
+  return h;
+}
+
+/* ---------------- Pemeriksaan kesehatan sambungan AI ---------------- */
+
+function periksaAi(){
+  var el=document.getElementById('hasilDiagnosaAi'); if(!el) return;
+  if(!online){
+    el.innerHTML='<p class="kecil" style="color:var(--oranye); margin-top:10px">Pemeriksaan butuh koneksi internet.</p>';
+    return;
+  }
+  el.innerHTML='<p class="kecil" style="margin-top:10px"><span class="muat hijau"></span> Menghubungi tiap model Gemini…</p>';
+
+  api('ai_diagnosa', {}).then(function(d){
+    el.innerHTML=kartuDiagnosaAi(d);
+  }).catch(function(e){
+    el.innerHTML='<p class="kecil" style="color:var(--merah); margin-top:10px">'+esc(e.message)+'</p>';
+  });
+}
+
+function kartuDiagnosaAi(d){
+  var h='<div class="kotak-edit" style="margin-top:11px; '+
+    (d.ok?'':'background:#fef2f2; border-color:var(--merah)')+'">'+
+    (d.ok?'✅ ':'⚠️ ')+esc(d.ringkasan)+'</div>';
+
+  if(d.model && d.model.length){
+    h+=(d.model||[]).map(function(m){
+      return '<div class="baris rata" style="padding:7px 0; border-bottom:1px solid var(--garis)">'+
+        '<div class="tumbuh">'+
+          '<div style="font-weight:700; font-size:13px">'+(m.ok?'🟢':'🔴')+' '+esc(m.model)+'</div>'+
+          '<div class="kecil">'+esc(m.pesan)+'</div>'+
+        '</div>'+
+        '<span class="kecil">'+n(m.ms)+' ms</span>'+
+      '</div>';
+    }).join('');
+  }
+
+  if(!d.ok){
+    h+='<div style="margin-top:11px"><div class="kecil" style="font-weight:700; margin-bottom:4px">Langkah yang biasanya menyelesaikan:</div>'+
+      '<ul class="kecil" style="margin:0; padding-left:17px; line-height:1.75">'+
+        '<li>Kuota penuh (429): akun gratis dibatasi beberapa permintaan per menit. Tunggu satu menit lalu ulangi.</li>'+
+        '<li>Kunci ditolak: buat kunci baru di aistudio.google.com/apikey, perbarui <b>GEMINI_API_KEY</b> di Project Settings › Script Properties.</li>'+
+        '<li>Model tidak ditemukan (404): isi <b>GEMINI_MODEL</b> dengan nama model yang tersedia di akunmu, misalnya <b>gemini-2.0-flash</b>.</li>'+
+        '<li>Setelah mengubah Code.gs, terbitkan ulang lewat Deploy › Manage deployments › New version.</li>'+
+      '</ul></div>';
+  }
   return h;
 }
 function sesudah_ahligizi(){

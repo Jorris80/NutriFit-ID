@@ -12,7 +12,7 @@
    pengguna lama otomatis mendapat versi terbaru.
    ============================================================ */
 
-const VERSI = 'nutrifit-v3';
+const VERSI = 'nutrifit-v4';
 const CACHE_INTI  = VERSI + '-inti';
 const CACHE_PETA  = VERSI + '-peta';
 const CACHE_LUAR  = VERSI + '-luar';
