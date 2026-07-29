@@ -198,6 +198,79 @@ textarea{resize:vertical; min-height:80px}
 .modal-judul{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px}
 .tutup{border:0; background:var(--bg); width:32px; height:32px; border-radius:10px; font-size:17px; cursor:pointer; color:var(--teks)}
 
+/* ================= PEREKAM AKTIVITAS (POLA STRAVA) ================= */
+.subnav{display:flex; gap:6px; background:var(--bg); padding:4px; border-radius:13px}
+.subnav button{
+  flex:1; border:0; background:transparent; padding:9px 6px; border-radius:10px;
+  font-size:13px; font-weight:700; color:var(--teks2); cursor:pointer; font-family:inherit;
+}
+.subnav button.aktif{background:var(--kartu); color:var(--hijau); box-shadow:0 1px 4px rgba(0,0,0,.09)}
+
+.rekam-utama{background:linear-gradient(160deg,#0f766e,#065f46); color:#fff}
+.rekam-utama .kecil{color:rgba(255,255,255,.72)}
+.rekam-utama .stat{background:rgba(255,255,255,.11); border-color:rgba(255,255,255,.18)}
+.rekam-utama .stat .nilai{color:#fff}
+.rekam-utama .stat .label{color:rgba(255,255,255,.72)}
+.jam-besar{
+  font-size:58px; font-weight:800; letter-spacing:-3px; line-height:1.05;
+  font-variant-numeric:tabular-nums; margin:2px 0 4px;
+}
+.metrik{padding:10px 4px}
+.metrik .mlabel{font-size:11.5px; font-weight:700; color:rgba(255,255,255,.72); text-transform:uppercase; letter-spacing:.4px}
+.metrik .mnilai{font-size:30px; font-weight:800; letter-spacing:-1.2px; font-variant-numeric:tabular-nums}
+.metrik .msat{font-size:11.5px; color:rgba(255,255,255,.72); font-weight:600}
+
+button.b.besar{padding:15px 18px; font-size:16px; border-radius:14px}
+button.b.merahb{background:var(--merah); color:#fff}
+button.b.jingga{background:#fc5200; color:#fff}
+
+.gps-lencana{display:inline-flex; align-items:center; gap:6px; font-weight:600}
+.gps-titik{width:9px; height:9px; border-radius:50%; display:inline-block; background:var(--garis)}
+.gps-titik.baik{background:#22c55e}
+.gps-titik.sedang{background:#f59e0b}
+.gps-titik.buruk{background:#ef4444}
+.gps-titik.cari{background:#38bdf8; animation:kedip 1s infinite}
+
+.titik-rekam{display:inline-block; width:8px; height:8px; border-radius:50%; background:#ef4444; animation:kedip 1.1s infinite; margin-right:4px}
+
+/* ---- split per kilometer ---- */
+.split-baris{display:flex; align-items:center; gap:9px; padding:6px 0; border-bottom:1px solid var(--garis)}
+.split-baris:last-of-type{border-bottom:0}
+.split-km{width:26px; font-size:12.5px; font-weight:800; color:var(--teks2); text-align:right}
+.split-bar{flex:1; height:20px; background:var(--bg); border-radius:6px; overflow:hidden}
+.split-bar>i{display:block; height:100%; border-radius:6px; background:linear-gradient(90deg,#059669,#34d399)}
+.split-bar>i.tercepat{background:linear-gradient(90deg,#fc5200,#fb923c)}
+.split-bar>i.sebagian{background:repeating-linear-gradient(45deg,#94a3b8,#94a3b8 5px,#cbd5e1 5px,#cbd5e1 10px)}
+.split-pace{width:62px; font-size:13px; font-weight:700; font-variant-numeric:tabular-nums; text-align:right}
+.split-elev{width:56px; font-size:11.5px; color:var(--teks2); text-align:right}
+
+/* ---- profil elevasi ---- */
+.elev-grafik{display:flex; align-items:flex-end; gap:1px; height:86px; margin-top:8px;
+  background:var(--bg); border-radius:10px; padding:6px; border:1px solid var(--garis)}
+.elev-grafik>i{flex:1; background:linear-gradient(180deg,#34d399,#059669); border-radius:2px 2px 0 0; min-height:2px}
+
+/* ---- kartu sesi di riwayat ---- */
+.sesi-kartu{
+  display:flex; gap:11px; align-items:center; padding:11px 0;
+  border-bottom:1px solid var(--garis); cursor:pointer;
+}
+.sesi-kartu:last-child{border-bottom:0}
+.sesi-ikon{
+  width:42px; height:42px; border-radius:12px; background:var(--hijau-g);
+  display:flex; align-items:center; justify-content:center; font-size:20px; flex:none;
+}
+.sesi-metrik{display:flex; gap:12px; margin-top:3px}
+.sesi-metrik span{font-size:12px; color:var(--teks2); font-weight:600}
+.sesi-metrik b{color:var(--teks); font-weight:800}
+
+.rekor-petak{
+  background:var(--bg); border:1px solid var(--garis); border-radius:12px;
+  padding:10px 11px; display:flex; flex-direction:column; gap:2px;
+}
+.rekor-petak .r-nilai{font-size:18px; font-weight:800; letter-spacing:-.5px}
+.rekor-petak .r-label{font-size:11px; font-weight:700; color:var(--teks2); text-transform:uppercase; letter-spacing:.3px}
+.rekor-petak .r-ket{font-size:11px; color:var(--teks2)}
+
 /* ================= AVATAR, PENAMPIL ZOOM, EDITOR JALUR ================= */
 .avatar-tombol{padding:0; overflow:hidden}
 .avatar-tombol img{width:100%; height:100%; object-fit:cover; display:block; border-radius:inherit}
@@ -549,10 +622,23 @@ function render(){
     ahligizi:viewAhliGizi, laporan:viewLaporan
   }[tab] || viewRingkasan;
 
+  /* Selagi rekaman berjalan, tampilan tidak dibangun ulang: peta, jejak GPS,
+     dan penghitung waktu harus bertahan. Cukup angkanya yang disegarkan. */
+  if(!paksaRender && sedangMerekam() && tab==='peta' && subPeta==='rekam'
+     && document.getElementById('recJam')){
+    perbaruiTampilanRec();
+    perbaruiAvatarHeader();
+    return;
+  }
+
   document.getElementById('tampilan').innerHTML = f();
   perbaruiAvatarHeader();
   if(typeof window['sesudah_'+tab] === 'function') window['sesudah_'+tab]();
 }
+
+var paksaRender=false;
+/** Membangun ulang tampilan walau rekaman sedang berjalan. */
+function renderPaksa(){ paksaRender=true; try{ render(); } finally { paksaRender=false; } }
 
 /* Tombol profil di bilah atas menampilkan foto bila pengguna sudah memasangnya. */
 function perbaruiAvatarHeader(){
@@ -571,9 +657,17 @@ function perbaruiAvatarHeader(){
 }
 
 function pindah(id){
+  if(id!=='peta') bersihkanPeta();
   tab = id;
-  render();
+  renderPaksa();
   window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/** Melepas objek peta saat meninggalkan tab agar tidak dipakai setelah dibuang. */
+function bersihkanPeta(){
+  if(petaObj){ try{ petaObj.remove(); }catch(e){} }
+  petaObj=null; lapisanRute=null; lapisanDraft=null; penandaDraft=[];
+  penandaSaya=null; penandaRec=null; lapisanRec=null; lapisanRencana=null;
 }
 
 /* ================================================================
@@ -1024,10 +1118,927 @@ function simpanMakananBaru(){
 }
 
 /* ================================================================
-   TAB 3 — PETA WORKOUT
+   TAB 3 — PETA WORKOUT (pola Strava: Rekam · Rute · Aktivitas)
    ================================================================ */
+var subPeta='rekam';
 var ruteTerpilih=null, petaObj=null, lapisanRute=null, penandaSaya=null, idWatch=null;
 var modeEditJalur=false, jalurDraft=[], lapisanDraft=null, penandaDraft=[];
+var sesiTerbuka=null;
+
+/* Keadaan perekam. Semuanya disimpan di luar DOM supaya rekaman tetap
+   berjalan ketika pengguna berpindah tab lalu kembali lagi. */
+var rec={
+  status:'siap', tipe:'Lari', ruteId:'',
+  mulaiMs:0, tikTerakhir:0, totalMs:0, bergerakMs:0,
+  jarak:0, naik:0, turun:0,
+  jejak:[], split:[],
+  patokanKm:0, patokanDetik:0, patokanNaik:0,
+  kecKini:0, kecMaks:0, akurasi:null, altTerakhir:null,
+  diamSejak:0, autoJeda:false, hrList:[], peringatanRute:0
+};
+var idTimerRec=null, wakeLock=null, lapisanRec=null, penandaRec=null, lapisanRencana=null;
+var ikutiPeta=true;
+
+function sedangMerekam(){ return rec.status==='jalan' || rec.status==='jeda'; }
+
+/* ---------------------------------------------------------------- kerangka */
+
+function viewPeta(){
+  var t=[['rekam','⏱️ Rekam'],['rute','🗺️ Rute'],['aktivitas','📊 Aktivitas']];
+  var h='<div class="kartu rapat"><div class="subnav">'+
+    t.map(function(x){
+      var tanda=(x[0]==='rekam' && sedangMerekam()) ? '<span class="titik-rekam"></span>' : '';
+      return '<button class="'+(subPeta===x[0]?'aktif':'')+'" onclick="pindahSubPeta(\''+x[0]+'\')">'+tanda+x[1]+'</button>';
+    }).join('')+'</div></div>';
+
+  if(subPeta==='rute') h+=viewRute();
+  else if(subPeta==='aktivitas') h+=viewAktivitas();
+  else h+=viewRekam();
+  return h;
+}
+
+function pindahSubPeta(s){
+  if(modeEditJalur && s!=='rute') return toast('Selesaikan mode ubah jalur dulu','info');
+  subPeta=s; sesiTerbuka=null; renderPaksa();
+}
+
+function sesudah_peta(){
+  if(subPeta==='rekam') pasangPetaRekam();
+  else if(subPeta==='rute') pasangPetaRute();
+  else if(sesiTerbuka) pasangPetaSesi();
+}
+
+/* ================================================================
+   3A — PEREKAM AKTIVITAS
+   ================================================================ */
+
+function viewRekam(){
+  var jalan=(rec.status==='jalan'), jeda=(rec.status==='jeda');
+
+  if(!sedangMerekam()){
+    var h='<div class="kartu">'+
+      '<h3>Rekam Aktivitas</h3>'+
+      '<div class="grid g2">'+
+        '<div class="ruas"><label class="f">Jenis olahraga</label><select id="recTipe">'+
+          ['Lari','Bersepeda','Jalan Kaki'].map(function(x){
+            return '<option'+(rec.tipe===x?' selected':'')+'>'+x+'</option>'; }).join('')+
+        '</select></div>'+
+        '<div class="ruas"><label class="f">Ikuti rute (opsional)</label>'+
+          '<select id="recRute" onchange="rec.ruteId=this.value; pasangPetaRekam()">'+
+            '<option value="">— Bebas —</option>'+
+            (S.rute||[]).map(function(r){
+              return '<option value="'+esc(r.id)+'"'+(rec.ruteId===r.id?' selected':'')+'>'+esc(r.name)+'</option>';
+            }).join('')+
+          '</select></div>'+
+      '</div>'+
+      '<div id="peta"></div>'+
+      '<div id="statusGps" class="kecil" style="margin-top:9px">'+lencanaGps()+'</div>'+
+      '<button class="b jingga penuh besar" style="margin-top:12px" onclick="mulaiRekam()">▶️ Mulai</button>'+
+      '<p class="kecil" style="margin-top:9px">Jeda otomatis aktif: hitungan waktu berhenti sendiri ketika kamu berhenti bergerak lebih dari delapan detik, lalu lanjut lagi begitu kembali melaju. Titik GPS dengan akurasi lebih buruk dari 35 meter dibuang supaya jaraknya tidak melar.</p>'+
+    '</div>';
+
+    var akhir=(S.sesi||[])[0];
+    if(akhir){
+      h+='<div class="kartu"><div class="baris rata"><h3>Aktivitas Terakhir</h3>'+
+        '<button class="b kecilb garis" onclick="bukaSesi(\''+jsq(akhir.id)+'\')">Lihat</button></div>'+
+        kartuSesiRingkas(akhir)+'</div>';
+    }
+    return h;
+  }
+
+  var pace = rec.jarak>0 ? (rec.bergerakMs/1000)/rec.jarak : 0;
+  var h2='<div class="kartu tengah rekam-utama">'+
+      '<div class="kecil" id="recStatus">'+labelStatusRec()+'</div>'+
+      '<div class="jam-besar" id="recJam">'+fmtDurasi(rec.bergerakMs/1000)+'</div>'+
+      '<div class="grid g2">'+
+        metrikBesar('Jarak', rec.jarak.toFixed(2), 'kilometer', 'recJarak')+
+        (rec.tipe==='Bersepeda'
+          ? metrikBesar('Kecepatan', rec.kecKini.toFixed(1), 'km/jam', 'recLaju')
+          : metrikBesar('Pace', fmtPace(pace), 'menit/km', 'recLaju'))+
+      '</div>'+
+      '<div class="grid g4" style="margin-top:6px">'+
+        kartuStat('Elevasi', '+'+Math.round(rec.naik)+' m')+
+        kartuStat('Kalori', rb(kalRec()))+
+        kartuStat('Waktu total', fmtDurasi(rec.totalMs/1000))+
+        kartuStat('Detak', rec.hrList.length ? (rec.hrList[rec.hrList.length-1]+' bpm') : '—')+
+      '</div>'+
+    '</div>';
+
+  h2+='<div class="kartu">'+
+      '<div id="peta"></div>'+
+      '<div class="baris rata" style="margin-top:9px">'+
+        '<div class="kecil" id="statusGps">'+lencanaGps()+'</div>'+
+        '<button class="b kecilb garis" onclick="toggleIkuti()">'+(ikutiPeta?'📍 Ikuti: nyala':'📍 Ikuti: mati')+'</button>'+
+      '</div>'+
+    '</div>';
+
+  h2+='<div class="kartu"><div class="grid g2">'+
+      (jeda
+        ? '<button class="b penuh besar" onclick="lanjutRekam()">▶️ Lanjutkan</button>'
+        : '<button class="b garis penuh besar" onclick="jedaRekam()">⏸️ Jeda</button>')+
+      '<button class="b merahb penuh besar" onclick="selesaiRekam()">⏹ Selesai</button>'+
+    '</div>'+
+    (jeda ? '<button class="b garis penuh" style="margin-top:9px" onclick="buangRekam()">🗑 Buang Rekaman</button>' : '')+
+    '</div>';
+
+  h2+='<div id="recSplit">'+kartuSplit(rec.split, rec.jarak, rec.bergerakMs/1000, rec.patokanKm, rec.patokanDetik)+'</div>';
+  return h2;
+}
+
+function labelStatusRec(){
+  if(rec.status==='jeda') return 'DIJEDA';
+  if(rec.autoJeda) return 'JEDA OTOMATIS · menunggu kamu bergerak';
+  return 'WAKTU BERGERAK';
+}
+
+function metrikBesar(label, nilai, satuan, id){
+  return '<div class="metrik">'+
+    '<div class="mlabel">'+esc(label)+'</div>'+
+    '<div class="mnilai" id="'+id+'">'+nilai+'</div>'+
+    '<div class="msat">'+esc(satuan)+'</div></div>';
+}
+
+function lencanaGps(){
+  if(rec.akurasi==null) return '<span class="gps-lencana"><i class="gps-titik cari"></i>Mencari sinyal GPS…</span>';
+  var a=Math.round(rec.akurasi);
+  var k = a<=10 ? 'baik' : (a<=25 ? 'sedang' : 'buruk');
+  var ket = a<=10 ? 'akurasi baik' : (a<=25 ? 'akurasi sedang' : 'akurasi buruk, titik diabaikan');
+  return '<span class="gps-lencana"><i class="gps-titik '+k+'"></i>GPS ±'+a+' m · '+ket+'</span>';
+}
+
+function toggleIkuti(){ ikutiPeta=!ikutiPeta; renderPaksa(); }
+
+/* ---------------------------------------------------------------- kendali */
+
+function mulaiRekam(){
+  if(!navigator.geolocation) return toast('Perangkat tidak mendukung GPS','err');
+  var st=document.getElementById('recTipe'), sr=document.getElementById('recRute');
+  rec.tipe = st ? st.value : rec.tipe;
+  rec.ruteId = sr ? sr.value : '';
+
+  rec.status='jalan';
+  rec.mulaiMs=Date.now(); rec.tikTerakhir=Date.now();
+  rec.totalMs=0; rec.bergerakMs=0;
+  rec.jarak=0; rec.naik=0; rec.turun=0;
+  rec.jejak=[]; rec.split=[];
+  rec.patokanKm=0; rec.patokanDetik=0; rec.patokanNaik=0;
+  rec.kecKini=0; rec.kecMaks=0; rec.altTerakhir=null;
+  rec.diamSejak=0; rec.autoJeda=false; rec.hrList=[]; rec.peringatanRute=0;
+
+  mulaiWatch();
+  if(idTimerRec) clearInterval(idTimerRec);
+  idTimerRec=setInterval(tikRekam, 1000);
+  kunciLayar();
+  renderPaksa();
+  toast('Rekaman dimulai','ok');
+}
+
+function jedaRekam(){
+  if(rec.status!=='jalan') return;
+  rec.status='jeda'; rec.autoJeda=false;
+  renderPaksa();
+  toast('Rekaman dijeda','info');
+}
+
+function lanjutRekam(){
+  if(rec.status!=='jeda') return;
+  rec.status='jalan'; rec.tikTerakhir=Date.now(); rec.diamSejak=0;
+  renderPaksa();
+  toast('Rekaman dilanjutkan','ok');
+}
+
+function hentikanRekam(){
+  if(idWatch!=null){ try{ navigator.geolocation.clearWatch(idWatch); }catch(e){} idWatch=null; }
+  if(idTimerRec){ clearInterval(idTimerRec); idTimerRec=null; }
+  lepasLayar();
+}
+
+function buangRekam(){
+  if(!confirm('Buang rekaman ini? Data yang sudah terekam tidak akan disimpan.')) return;
+  hentikanRekam(); resetRekam(); renderPaksa();
+  toast('Rekaman dibuang','info');
+}
+
+function resetRekam(){
+  rec.status='siap'; rec.jejak=[]; rec.split=[]; rec.jarak=0;
+  rec.naik=0; rec.turun=0; rec.totalMs=0; rec.bergerakMs=0;
+  rec.patokanKm=0; rec.patokanDetik=0; rec.patokanNaik=0;
+  rec.kecKini=0; rec.kecMaks=0; rec.autoJeda=false; rec.hrList=[];
+  lapisanRec=null; penandaRec=null;
+}
+
+function selesaiRekam(){
+  if(rec.jarak<0.03){
+    if(!confirm('Jarak yang terekam masih sangat pendek. Buang rekaman ini?')) return;
+    return buangRekam();
+  }
+  hentikanRekam();
+  rec.status='selesai';
+  modalSimpanSesi();
+}
+
+/* ---------------------------------------------------------------- GPS */
+
+function mulaiWatch(){
+  if(idWatch!=null){ try{ navigator.geolocation.clearWatch(idWatch); }catch(e){} }
+  idWatch=navigator.geolocation.watchPosition(terimaPosisi, function(e){
+    var el=document.getElementById('statusGps');
+    if(el) el.innerHTML='<span style="color:var(--merah)">🛰️ GPS gagal: '+esc(e.message)+'</span>';
+  }, {enableHighAccuracy:true, timeout:20000, maximumAge:1000});
+}
+
+function terimaPosisi(pos){
+  var c=pos.coords;
+  var la=c.latitude, ln=c.longitude;
+  var alt=(c.altitude===null || c.altitude===undefined) ? null : c.altitude;
+  rec.akurasi=c.accuracy;
+
+  var el=document.getElementById('statusGps');
+  if(el) el.innerHTML=lencanaGps();
+
+  if(petaObj && window.L){
+    if(!penandaRec){
+      penandaRec=L.circleMarker([la,ln],{radius:8, color:'#ffffff', weight:3,
+        fillColor:'#fc5200', fillOpacity:1}).addTo(petaObj);
+    } else penandaRec.setLatLng([la,ln]);
+    if(ikutiPeta){ try{ petaObj.panTo([la,ln],{animate:true}); }catch(e){} }
+  }
+
+  if(rec.status!=='jalan') return;
+  if(c.accuracy!=null && c.accuracy>35) return;
+
+  var akhir = rec.jejak.length ? rec.jejak[rec.jejak.length-1] : null;
+  var detik = (Date.now()-rec.mulaiMs)/1000;
+
+  if(!akhir){
+    rec.jejak.push({lat:la, lng:ln, alt:alt, t:Math.round(detik)});
+    rec.altTerakhir=alt;
+    gambarJejakRec();
+    return;
+  }
+
+  var dKm = jarakKm(akhir.lat, akhir.lng, la, ln);
+  if(dKm*1000 < 2.5){
+    if(!rec.diamSejak) rec.diamSejak=Date.now();
+    return;
+  }
+  rec.diamSejak=0;
+  if(rec.autoJeda){ rec.autoJeda=false; var s=document.getElementById('recStatus'); if(s) s.textContent=labelStatusRec(); }
+
+  var dt = detik - n(akhir.t);
+  if(dt>0){
+    var kec=(dKm/dt)*3600;
+    if(kec<80){ rec.kecKini=kec; if(kec>rec.kecMaks) rec.kecMaks=kec; }
+  }
+
+  rec.jarak += dKm;
+
+  if(alt!=null){
+    if(rec.altTerakhir!=null){
+      var dz=alt-rec.altTerakhir;
+      if(Math.abs(dz)>=1.5){
+        if(dz>0) rec.naik+=dz; else rec.turun+=-dz;
+        rec.altTerakhir=alt;
+      }
+    } else rec.altTerakhir=alt;
+  }
+
+  rec.jejak.push({lat:la, lng:ln, alt:alt, t:Math.round(detik)});
+  periksaSplit();
+  periksaMenyimpang(la, ln);
+  gambarJejakRec();
+  perbaruiTampilanRec();
+}
+
+function tikRekam(){
+  var kini=Date.now();
+  var dt=kini-(rec.tikTerakhir||kini);
+  rec.tikTerakhir=kini;
+  if(rec.status!=='jalan') return;
+
+  rec.totalMs+=dt;
+  if(rec.diamSejak && kini-rec.diamSejak>8000 && !rec.autoJeda){
+    rec.autoJeda=true; rec.kecKini=0;
+  }
+  if(!rec.autoJeda) rec.bergerakMs+=dt;
+  perbaruiTampilanRec();
+}
+
+function periksaSplit(){
+  while(rec.jarak >= rec.patokanKm+1){
+    rec.patokanKm += 1;
+    var detikKini=rec.bergerakMs/1000;
+    var s={km:rec.patokanKm, detik:Math.round(detikKini-rec.patokanDetik),
+           naik:Math.round(rec.naik-rec.patokanNaik)};
+    rec.split.push(s);
+    rec.patokanDetik=detikKini; rec.patokanNaik=rec.naik;
+    toast('Km '+s.km+' · '+fmtPace(s.detik)+' /km','ok');
+  }
+}
+
+/** Memperingatkan sekali per menit bila menyimpang jauh dari rute yang diikuti. */
+function periksaMenyimpang(la, ln){
+  if(!rec.ruteId) return;
+  var r=(S.rute||[]).filter(function(x){ return x.id===rec.ruteId; })[0];
+  if(!r) return;
+  var tk=titikRute(r);
+  if(tk.length<2) return;
+  var min=1e9;
+  for(var i=0;i<tk.length;i++){
+    var d=jarakKm(la, ln, tk[i].lat, tk[i].lng)*1000;
+    if(d<min) min=d;
+  }
+  var kini=Date.now();
+  if(min>80 && kini-rec.peringatanRute>60000){
+    rec.peringatanRute=kini;
+    toast('Kamu ±'+Math.round(min)+' m dari jalur rute '+r.name,'info');
+  }
+}
+
+function kalRec(){
+  var berat=n(S.profil.weightKg,70), jam=(rec.bergerakMs/1000)/3600;
+  if(!jam) return 0;
+  var kec=rec.jarak/jam, met;
+  if(rec.tipe==='Bersepeda') met = kec<16?4:(kec<22?8:10);
+  else if(rec.tipe==='Jalan Kaki') met = kec<5?3:4.3;
+  else met = kec<8?6:(kec<11?9.8:12.8);
+  return Math.round(met*berat*jam);
+}
+
+function perbaruiTampilanRec(){
+  var g=function(id){ return document.getElementById(id); };
+  var e;
+  if((e=g('recJam'))) e.textContent=fmtDurasi(rec.bergerakMs/1000);
+  if((e=g('recJarak'))) e.textContent=rec.jarak.toFixed(2);
+  if((e=g('recLaju'))){
+    e.textContent = rec.tipe==='Bersepeda'
+      ? rec.kecKini.toFixed(1)
+      : fmtPace(rec.jarak>0 ? (rec.bergerakMs/1000)/rec.jarak : 0);
+  }
+  if((e=g('recStatus'))) e.textContent=labelStatusRec();
+  if((e=g('recSplit'))) e.innerHTML=kartuSplit(rec.split, rec.jarak, rec.bergerakMs/1000, rec.patokanKm, rec.patokanDetik);
+
+  var stat=document.querySelectorAll('.rekam-utama .stat .nilai');
+  if(stat.length>=4){
+    stat[0].textContent='+'+Math.round(rec.naik)+' m';
+    stat[1].textContent=rb(kalRec());
+    stat[2].textContent=fmtDurasi(rec.totalMs/1000);
+    stat[3].textContent=rec.hrList.length ? (rec.hrList[rec.hrList.length-1]+' bpm') : '—';
+  }
+}
+
+function kunciLayar(){
+  try{
+    if(navigator.wakeLock && navigator.wakeLock.request){
+      navigator.wakeLock.request('screen').then(function(w){ wakeLock=w; }).catch(function(){});
+    }
+  }catch(e){}
+}
+function lepasLayar(){
+  try{ if(wakeLock && wakeLock.release){ wakeLock.release(); } }catch(e){}
+  wakeLock=null;
+}
+
+/* ---------------------------------------------------------------- peta rekam */
+
+function pasangPetaRekam(){
+  muatLeaflet(function(ok){
+    var el=document.getElementById('peta'); if(!el) return;
+    if(!ok){
+      el.innerHTML='<div class="kosong" style="padding:34px 16px"><span class="ik">🛰️</span>'+
+        'Peta butuh internet, tetapi <b>perekaman tetap berjalan</b>.<br>'+
+        '<span class="kecil">Jarak, waktu, pace, dan elevasi dihitung dari GPS perangkat, bukan dari peta.</span></div>';
+      return;
+    }
+    try{
+      if(petaObj){ try{ petaObj.remove(); }catch(e){} }
+      petaObj=null; lapisanRec=null; penandaRec=null; lapisanRencana=null;
+
+      var awal = rec.jejak.length ? [rec.jejak[0].lat, rec.jejak[0].lng] : [-6.2088, 106.8456];
+      petaObj=L.map(el,{zoomControl:true}).setView(awal, 16);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        {maxZoom:19, attribution:'© OpenStreetMap'}).addTo(petaObj);
+
+      if(rec.ruteId){
+        var r=(S.rute||[]).filter(function(x){ return x.id===rec.ruteId; })[0];
+        var tk=r?titikRute(r):[];
+        if(tk.length>1){
+          lapisanRencana=L.polyline(tk.map(function(t){ return [t.lat,t.lng]; }),
+            {color:'#64748b', weight:4, opacity:.65, dashArray:'8 7'}).addTo(petaObj);
+          petaObj.fitBounds(lapisanRencana.getBounds(),{padding:[26,26]});
+        }
+      }
+      gambarJejakRec();
+      setTimeout(function(){ if(petaObj) petaObj.invalidateSize(); }, 220);
+    }catch(e){
+      el.innerHTML='<div class="kosong">Gagal memuat peta: '+esc(e.message)+'</div>';
+    }
+  });
+}
+
+function gambarJejakRec(){
+  if(!petaObj || !window.L || rec.jejak.length<2) return;
+  var ll=rec.jejak.map(function(t){ return [t.lat,t.lng]; });
+  if(lapisanRec) petaObj.removeLayer(lapisanRec);
+  lapisanRec=L.polyline(ll,{color:'#fc5200', weight:5, opacity:.92}).addTo(petaObj);
+}
+
+/* ---------------------------------------------------------------- simpan sesi */
+
+function judulOtomatis(tipe){
+  var j=new Date().getHours();
+  var w = j<11 ? 'Pagi' : (j<15 ? 'Siang' : (j<18 ? 'Sore' : 'Malam'));
+  var k = tipe==='Bersepeda' ? 'Gowes' : (tipe==='Jalan Kaki' ? 'Jalan Santai' : 'Lari');
+  return k+' '+w;
+}
+
+function modalSimpanSesi(){
+  var detik=rec.bergerakMs/1000;
+  var pace = rec.jarak>0 ? detik/rec.jarak : 0;
+  bukaModal('Simpan Aktivitas',
+    '<div class="grid g4" style="margin-bottom:13px">'+
+      kartuStat('Jarak', rec.jarak.toFixed(2)+' km')+
+      kartuStat('Bergerak', fmtDurasi(detik))+
+      kartuStat(rec.tipe==='Bersepeda'?'Kec. rata²':'Pace rata²',
+        rec.tipe==='Bersepeda' ? (rec.jarak/(detik/3600)||0).toFixed(1)+' km/j' : fmtPace(pace))+
+      kartuStat('Kalori', rb(kalRec()))+
+    '</div>'+
+    '<div class="ruas"><label class="f">Judul</label>'+
+      '<input id="ssJudul" value="'+esc(judulOtomatis(rec.tipe))+'"></div>'+
+    '<div class="ruas"><label class="f">Catatan</label>'+
+      '<input id="ssCatat" placeholder="Cuaca cerah, kaki terasa ringan"></div>'+
+    '<button class="b penuh" onclick="simpanSesi()">Simpan Aktivitas</button>'+
+    '<button class="b garis penuh" style="margin-top:9px" onclick="tutupModal(); buangRekam()">Buang</button>'
+  );
+}
+
+function simpanSesi(){
+  var detik=Math.round(rec.bergerakMs/1000);
+  var jejak=sederhanakanJejak(rec.jejak, 0.000045);
+  var split=rec.split.slice();
+  var sisa=rec.jarak-rec.patokanKm;
+  if(sisa>0.05){
+    split.push({km:Math.round(rec.jarak*100)/100, detik:Math.round(detik-rec.patokanDetik),
+                naik:Math.round(rec.naik-rec.patokanNaik), sebagian:true});
+  }
+
+  var s={
+    id:idBaru('ses'), tanggal:hariIni(), jam:jamKini(), tipe:rec.tipe,
+    judul:(document.getElementById('ssJudul').value||'').trim() || judulOtomatis(rec.tipe),
+    ruteId:rec.ruteId||'',
+    durasiDetik:Math.round(rec.totalMs/1000),
+    bergerakDetik:detik,
+    jarakKm:Math.round(rec.jarak*100)/100,
+    elevasiNaik:Math.round(rec.naik), elevasiTurun:Math.round(rec.turun),
+    kalori:kalRec(),
+    paceRata: rec.jarak>0 ? Math.round(detik/rec.jarak) : 0,
+    kecepatanMaks:Math.round(rec.kecMaks*10)/10,
+    hrRata: rec.hrList.length ? Math.round(rec.hrList.reduce(function(a,b){return a+b;},0)/rec.hrList.length) : 0,
+    hrMaks: rec.hrList.length ? Math.max.apply(null, rec.hrList) : 0,
+    jejak:jejak, split:split,
+    catatan:(document.getElementById('ssCatat').value||'').trim()
+  };
+
+  var klien={
+    id:s.id, date:s.tanggal, time:s.jam, type:s.tipe, title:s.judul, routeId:s.ruteId,
+    elapsedSeconds:s.durasiDetik, movingSeconds:s.bergerakDetik, distanceKm:s.jarakKm,
+    elevGain:s.elevasiNaik, elevLoss:s.elevasiTurun, calories:s.kalori, avgPace:s.paceRata,
+    maxSpeed:s.kecepatanMaks, avgHr:s.hrRata, maxHr:s.hrMaks,
+    track:jejak, splits:split, notes:s.catatan
+  };
+
+  tutupModal();
+  ubah('sesi_simpan', s, function(){
+    S.sesi=S.sesi||[];
+    S.sesi.unshift(klien);
+    var a=aktivitasHari(s.tanggal);
+    a.activeCalories=n(a.activeCalories)+s.kalori;
+    a.distanceKm=Math.round((n(a.distanceKm)+s.jarakKm)*100)/100;
+    S.aktivitas=(S.aktivitas||[]).filter(function(x){ return x.date!==s.tanggal; });
+    S.aktivitas.push(a);
+    S.profil.userXp=n(S.profil.userXp)+25;
+    S.profil.userLevel=Math.floor(n(S.profil.userXp)/500)+1;
+  });
+
+  resetRekam();
+  subPeta='aktivitas'; sesiTerbuka=klien.id;
+  renderPaksa();
+  toast('Aktivitas tersimpan · '+s.jarakKm.toFixed(2)+' km','ok');
+}
+
+/* Penyederhanaan Ramer–Douglas–Peucker supaya jejak muat di satu sel Sheets.
+   RDP bekerja pada bidang datar lintang-bujur, jadi lintasan lurus yang
+   menanjak akan ikut terbuang dan profil elevasinya hilang. Karena itu titik
+   dengan perubahan ketinggian berarti ditandai untuk dipertahankan juga. */
+function sederhanakanJejak(jejak, eps){
+  if(jejak.length<=2) return jejak.slice();
+  var kerja=jejak;
+  if(kerja.length>2000) kerja=jarangkan(kerja, 2000);
+
+  var simpan={};
+  tandaiRdp(kerja, 0, kerja.length-1, eps, simpan);
+
+  var acuan=null;
+  for(var i=0;i<kerja.length;i++){
+    var a=kerja[i] ? kerja[i].alt : null;
+    if(a===null || a===undefined) continue;
+    if(acuan===null || Math.abs(a-acuan)>=3){ simpan[i]=true; acuan=a; }
+  }
+
+  var hasil=[];
+  for(var k=0;k<kerja.length;k++) if(simpan[k]) hasil.push(kerja[k]);
+  if(hasil.length>400) hasil=jarangkan(hasil, 400);
+  return hasil;
+}
+
+function jarangkan(a, maks){
+  if(a.length<=maks) return a.slice();
+  var langkah=a.length/(maks-1), out=[];
+  for(var i=0;i<maks-1;i++) out.push(a[Math.floor(i*langkah)]);
+  out.push(a[a.length-1]);
+  return out;
+}
+
+/** Menandai indeks titik yang harus dipertahankan (varian RDP tanpa salinan array). */
+function tandaiRdp(t, i, j, eps, simpan){
+  simpan[i]=true; simpan[j]=true;
+  var maks=0, idx=-1;
+  for(var k=i+1;k<j;k++){
+    var d=jarakKeGaris(t[k], t[i], t[j]);
+    if(d>maks){ maks=d; idx=k; }
+  }
+  if(maks>eps && idx>i){
+    tandaiRdp(t, i, idx, eps, simpan);
+    tandaiRdp(t, idx, j, eps, simpan);
+  }
+}
+
+function jarakKeGaris(p, a, b){
+  var dx=b.lng-a.lng, dy=b.lat-a.lat;
+  var pj=dx*dx+dy*dy;
+  var u = pj ? (((p.lng-a.lng)*dx + (p.lat-a.lat)*dy)/pj) : 0;
+  u=Math.max(0, Math.min(1, u));
+  var cx=a.lng+u*dx, cy=a.lat+u*dy;
+  return Math.sqrt((p.lng-cx)*(p.lng-cx) + (p.lat-cy)*(p.lat-cy));
+}
+
+/* ================================================================
+   3B — RIWAYAT AKTIVITAS & REKOR PRIBADI
+   ================================================================ */
+
+function viewAktivitas(){
+  var list=(S.sesi||[]);
+
+  if(sesiTerbuka){
+    var s=list.filter(function(x){ return x.id===sesiTerbuka; })[0];
+    if(s) return viewDetailSesi(s);
+    sesiTerbuka=null;
+  }
+
+  var h=kartuRekor(list);
+  h+='<div class="kartu">'+
+    '<div class="baris rata"><h3>Riwayat Aktivitas <span class="kecil">('+list.length+')</span></h3>'+
+      (list.length ? '<span class="chip abu">'+totalJarakSesi(list).toFixed(1)+' km total</span>' : '')+'</div>'+
+    (list.length
+      ? list.slice(0,40).map(function(s){
+          return '<div onclick="bukaSesi(\''+jsq(s.id)+'\')">'+kartuSesiRingkas(s)+'</div>';
+        }).join('')
+      : '<p class="kecil">Belum ada aktivitas terekam. Buka sub-tab <b>Rekam</b> untuk memulai sesi pertamamu.</p>')+
+  '</div>';
+  return h;
+}
+
+function ikonTipe(t){
+  if(t==='Bersepeda') return '🚴';
+  if(t==='Jalan Kaki') return '🚶';
+  return '🏃';
+}
+
+function kartuSesiRingkas(s){
+  var laju = s.type==='Bersepeda'
+    ? ((n(s.distanceKm)/(n(s.movingSeconds)/3600))||0).toFixed(1)+' km/j'
+    : fmtPace(s.avgPace)+' /km';
+  return '<div class="sesi-kartu">'+
+    '<div class="sesi-ikon">'+ikonTipe(s.type)+'</div>'+
+    '<div class="tumbuh">'+
+      '<div style="font-weight:700; font-size:14.5px">'+esc(s.title||s.type)+'</div>'+
+      '<div class="kecil">'+esc(s.date)+' · '+esc(s.time)+'</div>'+
+      '<div class="sesi-metrik">'+
+        '<span><b>'+n(s.distanceKm).toFixed(2)+'</b> km</span>'+
+        '<span><b>'+fmtDurasi(s.movingSeconds)+'</b></span>'+
+        '<span><b>'+laju+'</b></span>'+
+        '<span><b>'+rb(s.calories)+'</b> kkal</span>'+
+      '</div>'+
+    '</div>'+
+    '<div style="font-size:17px; color:var(--teks2)">›</div>'+
+  '</div>';
+}
+
+function bukaSesi(id){ subPeta='aktivitas'; sesiTerbuka=id; renderPaksa(); window.scrollTo({top:0,behavior:'smooth'}); }
+function tutupSesi(){ sesiTerbuka=null; renderPaksa(); }
+
+function totalJarakSesi(list){
+  var t=0; list.forEach(function(s){ t+=n(s.distanceKm); }); return t;
+}
+
+function viewDetailSesi(s){
+  var laju = s.type==='Bersepeda'
+    ? ((n(s.distanceKm)/(n(s.movingSeconds)/3600))||0).toFixed(1)+' km/j'
+    : fmtPace(s.avgPace)+' /km';
+  var jeda=Math.max(0, n(s.elapsedSeconds)-n(s.movingSeconds));
+
+  var h='<div class="kartu">'+
+      '<div class="baris rata">'+
+        '<button class="b kecilb garis" onclick="tutupSesi()">‹ Kembali</button>'+
+        '<span class="chip">'+ikonTipe(s.type)+' '+esc(s.type)+'</span>'+
+      '</div>'+
+      '<h3 style="margin-top:11px">'+esc(s.title||s.type)+'</h3>'+
+      '<p class="kecil">'+esc(s.date)+' pukul '+esc(s.time)+
+        (s.routeId ? ' · rute '+esc(namaRute(s.routeId)) : '')+'</p>'+
+      '<div id="peta"></div>'+
+      '<div class="grid g4" style="margin-top:11px">'+
+        kartuStat('Jarak', n(s.distanceKm).toFixed(2)+' km')+
+        kartuStat('Bergerak', fmtDurasi(s.movingSeconds))+
+        kartuStat(s.type==='Bersepeda'?'Kec. rata²':'Pace rata²', laju)+
+        kartuStat('Kalori', rb(s.calories))+
+      '</div>'+
+      '<div class="grid g4" style="margin-top:9px">'+
+        kartuStat('Elevasi naik', '+'+n(s.elevGain)+' m')+
+        kartuStat('Elevasi turun', '−'+n(s.elevLoss)+' m')+
+        kartuStat('Waktu total', fmtDurasi(s.elapsedSeconds))+
+        kartuStat('Waktu jeda', fmtDurasi(jeda))+
+      '</div>'+
+      (n(s.avgHr) ? '<div class="grid g2" style="margin-top:9px">'+
+        kartuStat('Detak rata²', n(s.avgHr)+' bpm')+
+        kartuStat('Detak maks', n(s.maxHr)+' bpm')+'</div>' : '')+
+      (s.notes ? '<p class="kecil" style="margin-top:10px">📝 '+esc(s.notes)+'</p>' : '')+
+    '</div>';
+
+  h+=kartuSplit(s.splits, n(s.distanceKm), n(s.movingSeconds), 0, 0);
+  h+=kartuElevasi(s.track);
+
+  h+='<div class="kartu"><div class="baris wrap" style="gap:8px">'+
+      '<button class="b garis" onclick="bagikanSesi(\''+jsq(s.id)+'\')">📣 Bagikan ke Komunitas</button>'+
+      '<button class="b garis" onclick="jadwalkanUlangSesi(\''+jsq(s.id)+'\')">📅 Jadwalkan Lagi</button>'+
+      '<button class="b garis" onclick="simpanSebagaiRute(\''+jsq(s.id)+'\')">🗺️ Simpan Jadi Rute</button>'+
+      '<button class="b garis" onclick="hapusSesi(\''+jsq(s.id)+'\')">🗑 Hapus</button>'+
+    '</div></div>';
+  return h;
+}
+
+function namaRute(id){
+  var r=(S.rute||[]).filter(function(x){ return x.id===id; })[0];
+  return r ? r.name : 'tidak dikenal';
+}
+
+function pasangPetaSesi(){
+  var s=(S.sesi||[]).filter(function(x){ return x.id===sesiTerbuka; })[0];
+  if(!s) return;
+  var tk=(s.track||[]).map(function(t){ return [n(t.lat), n(t.lng)]; })
+    .filter(function(t){ return t[0] || t[1]; });
+
+  muatLeaflet(function(ok){
+    var el=document.getElementById('peta'); if(!el) return;
+    if(!ok || tk.length<2){
+      el.innerHTML='<div class="kosong" style="padding:34px 16px"><span class="ik">🗺️</span>'+
+        (tk.length<2 ? 'Sesi ini tidak menyimpan jejak GPS.' : 'Peta butuh koneksi internet.')+
+        '<div class="kecil" style="margin-top:6px">Semua angka statistik di bawah tetap tersedia.</div></div>';
+      return;
+    }
+    try{
+      if(petaObj){ try{ petaObj.remove(); }catch(e){} }
+      petaObj=L.map(el,{zoomControl:true}).setView(tk[0], 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        {maxZoom:19, attribution:'© OpenStreetMap'}).addTo(petaObj);
+      var garis=L.polyline(tk,{color:'#fc5200', weight:5, opacity:.9}).addTo(petaObj);
+      petaObj.fitBounds(garis.getBounds(),{padding:[26,26]});
+      L.circleMarker(tk[0],{radius:7, color:'#fff', weight:3, fillColor:'#22c55e', fillOpacity:1})
+        .addTo(petaObj).bindPopup('Start');
+      L.circleMarker(tk[tk.length-1],{radius:7, color:'#fff', weight:3, fillColor:'#ef4444', fillOpacity:1})
+        .addTo(petaObj).bindPopup('Finish');
+      setTimeout(function(){ if(petaObj) petaObj.invalidateSize(); }, 220);
+    }catch(e){
+      el.innerHTML='<div class="kosong">Gagal memuat peta: '+esc(e.message)+'</div>';
+    }
+  });
+}
+
+/* ---------------------------------------------------------------- split & elevasi */
+
+function kartuSplit(splits, jarakKini, detikKini, patokanKm, patokanDetik){
+  var daftar=(splits||[]).slice();
+
+  // kilometer yang sedang berjalan ikut ditampilkan sebagai bar bergaris
+  if(jarakKini!==undefined && patokanKm!==undefined){
+    var sisa=jarakKini-patokanKm;
+    if(sisa>0.03){
+      daftar.push({km:Math.round(jarakKini*100)/100,
+                   detik:Math.round(detikKini-patokanDetik),
+                   naik:0, sebagian:true});
+    }
+  }
+  if(!daftar.length) return '';
+
+  var penuh=daftar.filter(function(s){ return !s.sebagian; });
+  var maks=1, min=1e9;
+  penuh.forEach(function(s){ if(n(s.detik)>maks) maks=n(s.detik); if(n(s.detik)<min) min=n(s.detik); });
+  if(!penuh.length){ maks=Math.max(1, n(daftar[0].detik)); min=maks; }
+
+  return '<div class="kartu"><h3>Split per Kilometer</h3>'+
+    daftar.map(function(s){
+      var lebar=Math.max(10, Math.min(100, Math.round(n(s.detik)/maks*100)));
+      var kelas = s.sebagian ? 'sebagian' : ((penuh.length>1 && n(s.detik)===min) ? 'tercepat' : '');
+      return '<div class="split-baris">'+
+        '<div class="split-km">'+(s.sebagian ? n(s.km).toFixed(2) : n(s.km))+'</div>'+
+        '<div class="split-bar"><i class="'+kelas+'" style="width:'+lebar+'%"></i></div>'+
+        '<div class="split-pace">'+fmtPace(s.detik)+'</div>'+
+        '<div class="split-elev">'+(n(s.naik) ? '+'+n(s.naik)+' m' : '—')+'</div>'+
+      '</div>';
+    }).join('')+
+    '<p class="kecil" style="margin-top:8px">Panjang bar adalah waktu tiap kilometer dibanding kilometer terlambat — makin pendek berarti makin cepat. Bar bergaris adalah kilometer yang belum genap.</p>'+
+  '</div>';
+}
+
+function kartuElevasi(track){
+  var alt=(track||[]).map(function(t){ return n(t.alt); }).filter(function(a){ return a>0; });
+  if(alt.length<4) return '';
+  var lo=Math.min.apply(null, alt), hi=Math.max.apply(null, alt);
+  var rentang=Math.max(1, hi-lo);
+  var contoh=jarangkan(alt, Math.min(64, alt.length));
+  return '<div class="kartu"><h3>Profil Elevasi</h3>'+
+    '<div class="baris rata"><span class="kecil">Terendah '+Math.round(lo)+' m</span>'+
+      '<span class="kecil">Tertinggi '+Math.round(hi)+' m</span></div>'+
+    '<div class="elev-grafik">'+
+      contoh.map(function(a){
+        var t=Math.max(4, Math.round((a-lo)/rentang*100));
+        return '<i style="height:'+t+'%"></i>';
+      }).join('')+
+    '</div>'+
+    '<p class="kecil" style="margin-top:7px">Elevasi diambil dari GPS perangkat. Banyak ponsel tidak punya barometer, jadi angkanya bisa meleset beberapa meter dan sebaiknya dibaca sebagai gambaran naik-turun, bukan ukuran pasti.</p>'+
+  '</div>';
+}
+
+/* ---------------------------------------------------------------- rekor pribadi */
+
+function rekorKm(list, targetKm){
+  var terbaik=null;
+  list.forEach(function(s){
+    var sp=(s.splits||[]).filter(function(x){ return !x.sebagian; });
+    if(sp.length<targetKm) return;
+    var total=0;
+    for(var i=0;i<targetKm;i++) total+=n(sp[i].detik);
+    if(total>0 && (!terbaik || total<terbaik.detik)) terbaik={detik:total, sesi:s};
+  });
+  return terbaik;
+}
+
+function kartuRekor(list){
+  if(!list.length) return '';
+  var lari=list.filter(function(s){ return s.type!=='Bersepeda'; });
+  var r1=rekorKm(lari,1), r5=rekorKm(lari,5), r10=rekorKm(lari,10);
+
+  var terjauh=null, terlama=null, tertinggi=null, totalKal=0;
+  list.forEach(function(s){
+    if(!terjauh || n(s.distanceKm)>n(terjauh.distanceKm)) terjauh=s;
+    if(!terlama || n(s.movingSeconds)>n(terlama.movingSeconds)) terlama=s;
+    if(!tertinggi || n(s.elevGain)>n(tertinggi.elevGain)) tertinggi=s;
+    totalKal+=n(s.calories);
+  });
+
+  var petak=[];
+  if(r1) petak.push(['1 km tercepat', fmtDurasi(r1.detik), r1.sesi.date]);
+  if(r5) petak.push(['5 km tercepat', fmtDurasi(r5.detik), r5.sesi.date]);
+  if(r10) petak.push(['10 km tercepat', fmtDurasi(r10.detik), r10.sesi.date]);
+  if(terjauh) petak.push(['Jarak terjauh', n(terjauh.distanceKm).toFixed(2)+' km', terjauh.date]);
+  if(terlama) petak.push(['Durasi terlama', fmtDurasi(terlama.movingSeconds), terlama.date]);
+  if(tertinggi && n(tertinggi.elevGain)) petak.push(['Elevasi terbanyak', '+'+n(tertinggi.elevGain)+' m', tertinggi.date]);
+
+  var h='<div class="kartu"><h3>Rekor Pribadi</h3>'+
+    '<div class="grid g2">'+
+      kartuStat('Total sesi', list.length)+
+      kartuStat('Total jarak', totalJarakSesi(list).toFixed(1)+' km')+
+    '</div>';
+
+  if(petak.length){
+    h+='<div class="grid g2" style="margin-top:9px">'+
+      petak.map(function(p){
+        return '<div class="rekor-petak"><div class="r-label">'+esc(p[0])+'</div>'+
+          '<div class="r-nilai">'+esc(String(p[1]))+'</div>'+
+          '<div class="r-ket">'+esc(p[2])+'</div></div>';
+      }).join('')+'</div>';
+  } else {
+    h+='<p class="kecil" style="margin-top:9px">Rekor kecepatan per jarak muncul setelah ada sesi yang menembus satu kilometer penuh.</p>';
+  }
+
+  h+=rekorPerRute(list);
+  h+='<p class="kecil" style="margin-top:9px">Total pembakaran dari seluruh sesi: '+rb(totalKal)+' kkal.</p></div>';
+  return h;
+}
+
+function rekorPerRute(list){
+  var per={};
+  list.forEach(function(s){
+    if(!s.routeId) return;
+    if(!per[s.routeId] || n(s.movingSeconds)<n(per[s.routeId].movingSeconds)) per[s.routeId]=s;
+  });
+  var kunci=Object.keys(per);
+  if(!kunci.length) return '';
+  return '<div style="margin-top:12px"><div class="kecil" style="font-weight:700; margin-bottom:5px">Waktu terbaik per rute</div>'+
+    kunci.map(function(k){
+      var s=per[k];
+      return '<div class="baris rata" style="padding:5px 0; border-bottom:1px solid var(--garis)">'+
+        '<span class="kecil">'+esc(namaRute(k))+'</span>'+
+        '<span class="kecil"><b>'+fmtDurasi(s.movingSeconds)+'</b> · '+n(s.distanceKm).toFixed(2)+' km</span></div>';
+    }).join('')+'</div>';
+}
+
+/* ---------------------------------------------------------------- aksi sesi */
+
+function hapusSesi(id){
+  var s=(S.sesi||[]).filter(function(x){ return x.id===id; })[0];
+  if(!s) return;
+  if(!confirm('Hapus aktivitas "'+(s.title||s.type)+'"? Jejak GPS-nya ikut terhapus.')) return;
+  sesiTerbuka=null;
+  ubah('sesi_hapus', {id:id}, function(){
+    S.sesi=(S.sesi||[]).filter(function(x){ return x.id!==id; });
+    var a=aktivitasHari(s.date);
+    a.activeCalories=Math.max(0, n(a.activeCalories)-n(s.calories));
+    a.distanceKm=Math.round(Math.max(0, n(a.distanceKm)-n(s.distanceKm))*100)/100;
+    S.aktivitas=(S.aktivitas||[]).filter(function(x){ return x.date!==s.date; });
+    S.aktivitas.push(a);
+  });
+  toast('Aktivitas dihapus','ok');
+}
+
+function bagikanSesi(id){
+  var s=(S.sesi||[]).filter(function(x){ return x.id===id; })[0];
+  if(!s) return;
+  var p=S.profil||{};
+  var laju = s.type==='Bersepeda'
+    ? ((n(s.distanceKm)/(n(s.movingSeconds)/3600))||0).toFixed(1)+' km/jam'
+    : fmtPace(s.avgPace)+' /km';
+  var post={
+    id:idBaru('cp'), authorName:p.name||'Saya',
+    authorAvatar:(p.name||'S').substring(0,1).toUpperCase(),
+    authorBadge:'Level '+n(p.userLevel,1), timestamp:'Baru saja',
+    content:ikonTipe(s.type)+' '+(s.title||s.type)+' — '+n(s.distanceKm).toFixed(2)+' km dalam '+
+            fmtDurasi(s.movingSeconds)+' (pace '+laju+'), '+rb(s.calories)+' kkal.',
+    likesCount:0, commentsCount:0, userLiked:false, mealShared:null,
+    workoutShared:{type:s.type, distanceKm:n(s.distanceKm), durationMinutes:Math.round(n(s.movingSeconds)/60)}
+  };
+  ubah('komunitas_post', post, function(){ S.komunitas=S.komunitas||[]; S.komunitas.push(post); });
+  toast('Aktivitas dibagikan ke Komunitas','ok');
+}
+
+function jadwalkanUlangSesi(id){
+  var s=(S.sesi||[]).filter(function(x){ return x.id===id; })[0];
+  if(!s) return;
+  modalJadwal({
+    title:s.title||s.type,
+    type: s.type==='Bersepeda' ? 'Bersepeda' : (s.type==='Jalan Kaki' ? 'Yoga & Stretching' : 'Lari/Jogging'),
+    durationMinutes:Math.round(n(s.movingSeconds)/60),
+    targetCalories:n(s.calories),
+    notes:'Ulangi '+n(s.distanceKm).toFixed(2)+' km'
+  });
+}
+
+function simpanSebagaiRute(id){
+  var s=(S.sesi||[]).filter(function(x){ return x.id===id; })[0];
+  if(!s) return;
+  var tk=(s.track||[]).map(function(t){ return {lat:n(t.lat), lng:n(t.lng), label:''}; })
+    .filter(function(t){ return t.lat || t.lng; });
+  if(tk.length<2) return toast('Sesi ini tidak punya jejak GPS untuk dijadikan rute','err');
+
+  var data={
+    id:idBaru('rt'), name:(s.title||s.type)+' (dari rekaman)', locationName:'',
+    type: s.type==='Jalan Kaki' ? 'Jalan Santai' : s.type,
+    difficulty:'Sedang', distanceKm:n(s.distanceKm),
+    estimatedMinutes:Math.round(n(s.movingSeconds)/60), caloriesBurned:n(s.calories),
+    description:'Dibuat otomatis dari aktivitas '+esc(s.date)+'.',
+    center:{lat:tk[0].lat, lng:tk[0].lng}, waypoints:tk
+  };
+  ubah('rute_simpan', data, function(){ S.rute=S.rute||[]; S.rute.push(data); });
+  ruteTerpilih=data.id;
+  toast('Jejak disimpan sebagai rute baru','ok');
+}
+
+/* ---------------------------------------------------------------- pemformat */
+
+function fmtDurasi(detik){
+  detik=Math.max(0, Math.round(n(detik)));
+  var j=Math.floor(detik/3600), m=Math.floor((detik%3600)/60), d=detik%60;
+  return j>0 ? (j+':'+pad(m)+':'+pad(d)) : (pad(m)+':'+pad(d));
+}
+
+function fmtPace(detikPerKm){
+  var v=Math.round(n(detikPerKm));
+  if(!v || !isFinite(v) || v>5999) return '—';
+  return Math.floor(v/60)+':'+pad(v%60);
+}
+
+/* ================================================================
+   3C — DAFTAR & EDITOR RUTE
+   ================================================================ */
 
 function ruteAktif(){
   var rute=S.rute||[];
@@ -1043,7 +2054,7 @@ function titikRute(r){
   }).filter(function(t){ return t.lat || t.lng; });
 }
 
-function viewPeta(){
+function viewRute(){
   var rute=S.rute||[];
   if(!ruteTerpilih && rute.length) ruteTerpilih=rute[0].id;
   var r=ruteAktif();
@@ -1057,7 +2068,7 @@ function viewPeta(){
         ? '<div class="baris wrap" style="gap:7px">'+rute.map(function(x){
             return '<button class="b kecilb '+(r&&x.id===r.id?'':'garis')+'" onclick="pilihRute(\''+jsq(x.id)+'\')">'+esc(x.name)+'</button>';
           }).join('')+'</div>'
-        : '<p class="kecil">Belum ada rute tersimpan. Tekan <b>+ Rute Baru</b> untuk membuat rute pertamamu, lalu gambar jalurnya langsung di peta.</p>')+
+        : '<p class="kecil">Belum ada rute tersimpan. Tekan <b>+ Rute Baru</b>, atau rekam satu aktivitas lalu simpan jejaknya sebagai rute.</p>')+
     '</div>';
 
   if(r){
@@ -1088,7 +2099,7 @@ function viewPeta(){
         '</div>'+
         (r.description ? '<p class="kecil" style="margin-top:10px">'+esc(r.description)+'</p>' : '')+
         '<div class="baris wrap" style="gap:8px; margin-top:10px">'+
-          '<button class="b" id="btnLacak" onclick="toggleLacak()">▶️ Mulai Lacak GPS</button>'+
+          '<button class="b jingga" onclick="rekamDiRute(\''+jsq(r.id)+'\')">▶️ Rekam di Rute Ini</button>'+
           '<button class="b garis" onclick="jadwalkanRute(\''+jsq(r.id)+'\')">📅 Jadwalkan</button>'+
         '</div>'+
         '<div class="baris wrap" style="gap:8px; margin-top:8px">'+
@@ -1096,19 +2107,37 @@ function viewPeta(){
           '<button class="b garis" onclick="mulaiEditJalur()">🧭 Ubah Jalur di Peta</button>'+
           '<button class="b garis" onclick="hapusRute(\''+jsq(r.id)+'\')">🗑 Hapus Rute</button>'+
         '</div>'+
-        '<div id="infoLacak" class="kecil" style="margin-top:9px"></div>';
+        riwayatRute(r.id);
     }
     h+='</div>';
   }
   return h;
 }
 
-function pilihRute(id){
-  if(modeEditJalur) return toast('Selesaikan atau keluar dari mode ubah jalur dulu','info');
-  ruteTerpilih=id; render();
+function riwayatRute(id){
+  var list=(S.sesi||[]).filter(function(s){ return s.routeId===id; });
+  if(!list.length) return '';
+  var terbaik=list.reduce(function(a,b){ return n(b.movingSeconds)<n(a.movingSeconds)?b:a; });
+  return '<div style="margin-top:12px; border-top:1px solid var(--garis); padding-top:9px">'+
+    '<div class="kecil"><b>'+list.length+'</b> aktivitas tercatat di rute ini · waktu terbaik '+
+    '<b>'+fmtDurasi(terbaik.movingSeconds)+'</b> pada '+esc(terbaik.date)+'</div></div>';
 }
 
-function sesudah_peta(){
+function rekamDiRute(id){
+  rec.ruteId=id;
+  var r=(S.rute||[]).filter(function(x){ return x.id===id; })[0];
+  if(r) rec.tipe = r.type==='Bersepeda' ? 'Bersepeda' : (r.type==='Jalan Santai' ? 'Jalan Kaki' : 'Lari');
+  subPeta='rekam';
+  renderPaksa();
+  toast('Rute dipasang. Tekan Mulai bila sudah siap.','info');
+}
+
+function pilihRute(id){
+  if(modeEditJalur) return toast('Selesaikan atau keluar dari mode ubah jalur dulu','info');
+  ruteTerpilih=id; renderPaksa();
+}
+
+function pasangPetaRute(){
   var r=ruteAktif(); if(!r) return;
   muatLeaflet(function(ok){
     var el=document.getElementById('peta'); if(!el) return;
@@ -1126,7 +2155,7 @@ function sesudah_peta(){
     }
 
     try{
-      if(petaObj){ petaObj.remove(); }
+      if(petaObj){ try{ petaObj.remove(); }catch(e){} }
       petaObj=null; lapisanRute=null; lapisanDraft=null; penandaSaya=null; penandaDraft=[];
 
       var tk = modeEditJalur ? jalurDraft : titikRute(r);
@@ -1142,7 +2171,7 @@ function sesudah_peta(){
         el.classList.add('menggambar');
         petaObj.on('click', function(e){ tambahTitik(e.latlng.lat, e.latlng.lng); });
         gambarDraft();
-        if(tk.length>1) petaObj.fitBounds(L.latLngBounds(tk.map(function(t){return [t.lat,t.lng];})),{padding:[30,30]});
+        if(tk.length>1) petaObj.fitBounds(L.latLngBounds(tk.map(function(t){ return [t.lat,t.lng]; })),{padding:[30,30]});
       } else if(tk.length>1){
         lapisanRute=L.polyline(tk.map(function(t){ return [t.lat,t.lng]; }),
           {color:'#059669', weight:5, opacity:.85}).addTo(petaObj);
@@ -1166,12 +2195,12 @@ function mulaiEditJalur(){
   var r=ruteAktif(); if(!r) return;
   jalurDraft=titikRute(r);
   modeEditJalur=true;
-  render();
+  renderPaksa();
   toast('Ketuk peta untuk menambah titik jalur','info');
 }
 
 function batalEditJalur(){
-  modeEditJalur=false; jalurDraft=[]; render();
+  modeEditJalur=false; jalurDraft=[]; renderPaksa();
 }
 
 function tambahTitik(la, ln){
@@ -1302,7 +2331,7 @@ function modalRute(id){
     '<button class="b garis penuh" onclick="isiLokasiSaya()">📍 Pakai Lokasi Saya Sekarang</button>'+
     '<div class="ruas" style="margin-top:13px"><label class="f">Deskripsi</label>'+
       '<input id="rtDesk" value="'+esc(r.description||'')+'" placeholder="Lintasan datar, rindang, cocok pagi hari"></div>'+
-    '<p class="kecil">Jarak dan kalori akan dihitung ulang otomatis begitu kamu menggambar jalurnya lewat tombol <b>Ubah Jalur di Peta</b>.</p>'+
+    '<p class="kecil">Jarak dan kalori dihitung ulang otomatis begitu kamu menggambar jalurnya lewat tombol <b>Ubah Jalur di Peta</b>.</p>'+
     '<button class="b penuh" onclick="simpanRute()">'+(baru?'Buat Rute':'Simpan Perubahan')+'</button>'
   );
 }
@@ -1382,39 +2411,6 @@ function muatLeaflet(cb){
   js.onload=function(){ cb(true); };
   js.onerror=function(){ cb(false); };
   document.head.appendChild(js);
-}
-
-var lacakData={jalan:false, jarak:0, mulai:0, terakhir:null};
-function toggleLacak(){
-  var btn=document.getElementById('btnLacak');
-  if(lacakData.jalan){
-    if(idWatch!=null) navigator.geolocation.clearWatch(idWatch);
-    idWatch=null; lacakData.jalan=false;
-    btn.textContent='▶️ Mulai Lacak GPS';
-    var menit=Math.round((Date.now()-lacakData.mulai)/60000);
-    toast('Sesi selesai: '+lacakData.jarak.toFixed(2)+' km dalam '+menit+' menit','ok');
-    return;
-  }
-  if(!navigator.geolocation) return toast('Perangkat tidak mendukung GPS','err');
-  lacakData={jalan:true, jarak:0, mulai:Date.now(), terakhir:null};
-  btn.textContent='⏹ Hentikan';
-  document.getElementById('infoLacak').textContent='Mencari sinyal GPS…';
-  idWatch=navigator.geolocation.watchPosition(function(pos){
-    var la=pos.coords.latitude, ln=pos.coords.longitude;
-    if(lacakData.terakhir) lacakData.jarak += jarakKm(lacakData.terakhir[0], lacakData.terakhir[1], la, ln);
-    lacakData.terakhir=[la,ln];
-    var menit=(Date.now()-lacakData.mulai)/60000;
-    var kal=Math.round(lacakData.jarak*n(S.profil.weightKg,70)*1.036);
-    document.getElementById('infoLacak').innerHTML =
-      '🛰️ '+lacakData.jarak.toFixed(2)+' km · '+menit.toFixed(1)+' menit · ~'+kal+' kkal';
-    if(petaObj && window.L){
-      if(!penandaSaya) penandaSaya=L.circleMarker([la,ln],{radius:8, color:'#0ea5e9', fillColor:'#0ea5e9', fillOpacity:.85}).addTo(petaObj);
-      else penandaSaya.setLatLng([la,ln]);
-      petaObj.panTo([la,ln]);
-    }
-  }, function(e){
-    document.getElementById('infoLacak').textContent='GPS gagal: '+e.message;
-  }, {enableHighAccuracy:true, timeout:15000, maximumAge:3000});
 }
 
 function jarakKm(a1,b1,a2,b2){
@@ -1988,6 +2984,7 @@ function terimaDetak(e){
   if(!bpm || bpm<25 || bpm>250) return;
   bpmKini=bpm;
   riwayatBpm.push(bpm);
+  if(sedangMerekam() && rec.status==='jalan') rec.hrList.push(bpm);
   var kini=Date.now();
   if(tab==='wearable' && kini-bpmTerakhirRender>1200){ bpmTerakhirRender=kini; render(); }
 }
