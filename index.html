@@ -5,14 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#059669">
 <title>NutriFit ID</title>
-<link rel="manifest" href="manifest.json">
-<link rel="icon" type="image/svg+xml" href="icon.svg">
-<link rel="apple-touch-icon" href="icon.svg">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="NutriFit ID">
-<meta name="description" content="Aplikasi hitung kalori, pemindai barcode, resep AI, pemantau detak jantung, dan komunitas kebugaran berbahasa Indonesia.">
-<script src="config.js"></script>
 <style>
 /* ============================ DASAR ============================ */
 :root{
@@ -198,6 +190,44 @@ textarea{resize:vertical; min-height:80px}
 .modal-judul{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px}
 .tutup{border:0; background:var(--bg); width:32px; height:32px; border-radius:10px; font-size:17px; cursor:pointer; color:var(--teks)}
 
+/* ================= KARTU BAGIKAN (POLA HUAWEI HEALTH) ================= */
+.bagi-pratinjau{
+  width:100%; max-width:300px; margin:0 auto; display:block; border-radius:14px;
+  box-shadow:0 8px 28px rgba(15,23,42,.22); background:var(--bg);
+}
+.bagi-tema{display:flex; gap:8px; overflow-x:auto; padding:3px 1px; scrollbar-width:none}
+.bagi-tema::-webkit-scrollbar{display:none}
+.bagi-tema button{
+  flex:none; border:2px solid transparent; border-radius:11px; padding:0;
+  width:52px; height:52px; cursor:pointer; position:relative; overflow:hidden;
+  font-family:inherit; font-size:10px; font-weight:800; color:#fff;
+  display:flex; align-items:flex-end; justify-content:center; padding-bottom:4px;
+}
+.bagi-tema button.aktif{border-color:var(--hijau); box-shadow:0 0 0 2px var(--hijau-g)}
+.t-malam{background:linear-gradient(160deg,#0f172a,#1e3a5f)}
+.t-terang{background:linear-gradient(160deg,#f1f5f9,#cbd5e1); color:#334155 !important}
+.t-jingga{background:linear-gradient(160deg,#fc5200,#f59e0b)}
+.t-hutan{background:linear-gradient(160deg,#064e3b,#059669)}
+.t-foto{background:linear-gradient(160deg,#475569,#94a3b8)}
+
+/* ================= MODE LAYAR REDUP ================= */
+.redup{
+  position:fixed; inset:0; z-index:7000; background:#000; color:#4b5563;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  text-align:center; padding:24px; cursor:pointer; user-select:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.redup .r-jam{font-size:52px; font-weight:800; letter-spacing:-2px; font-variant-numeric:tabular-nums; color:#6b7280}
+.redup .r-jarak{font-size:30px; font-weight:800; letter-spacing:-1px; margin-top:6px; color:#4b5563}
+.redup .r-sat{font-size:12px; font-weight:700; letter-spacing:1.5px; color:#374151; margin-top:3px}
+.redup .r-ket{position:fixed; bottom:calc(26px + env(safe-area-inset-bottom)); font-size:11.5px; color:#374151; line-height:1.7}
+.redup .r-titik{width:7px; height:7px; border-radius:50%; background:#7f1d1d; display:inline-block; margin-right:5px; animation:kedip 1.6s infinite}
+
+.peringatan-jeda{
+  background:#fef6e7; border:1px solid #b45309; color:#7c2d12; border-radius:11px;
+  padding:9px 11px; font-size:12.5px; line-height:1.6; margin-top:10px;
+}
+
 /* ================= PEREKAM AKTIVITAS (POLA STRAVA) ================= */
 .subnav{display:flex; gap:6px; background:var(--bg); padding:4px; border-radius:13px}
 .subnav button{
@@ -360,7 +390,6 @@ button.b.jingga{background:#fc5200; color:#fff}
       <div class="sub" id="hdrSub">Memuat data…</div>
     </div>
     <div class="baris" style="gap:7px">
-      <button class="tombol-ikon sembunyi" id="btnPasang" title="Pasang aplikasi">⬇️</button>
       <button class="tombol-ikon" id="btnTema" title="Ganti tema">🌙</button>
       <button class="tombol-ikon" id="btnNotif" title="Pengingat">🔔</button>
       <button class="tombol-ikon avatar-tombol" id="btnProfil" title="Profil">👤</button>
@@ -425,7 +454,8 @@ function api(aksi, data){
 }
 
 /* ---------- 2. PENYIMPANAN LOKAL ---------- */
-var K = {DATA:'nutrifit_data', ANTREAN:'nutrifit_antrean', TEMA:'nutrifit_tema'};
+var K = {DATA:'nutrifit_data', ANTREAN:'nutrifit_antrean', TEMA:'nutrifit_tema',
+         REKAM:'nutrifit_rekam_berjalan'};
 
 function simpan(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
 function baca(k,d){ try{ var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } }
@@ -1134,7 +1164,8 @@ var rec={
   jejak:[], split:[],
   patokanKm:0, patokanDetik:0, patokanNaik:0,
   kecKini:0, kecMaks:0, akurasi:null, altTerakhir:null,
-  diamSejak:0, autoJeda:false, hrList:[], peringatanRute:0
+  diamSejak:0, autoJeda:false, hrList:[], peringatanRute:0,
+  jeda:[], putusBerikut:false, simpanTerakhir:0
 };
 var idTimerRec=null, wakeLock=null, lapisanRec=null, penandaRec=null, lapisanRencana=null;
 var ikutiPeta=true;
@@ -1195,6 +1226,7 @@ function viewRekam(){
       '<div id="statusGps" class="kecil" style="margin-top:9px">'+lencanaGps()+'</div>'+
       '<button class="b jingga penuh besar" style="margin-top:12px" onclick="mulaiRekam()">▶️ Mulai</button>'+
       '<p class="kecil" style="margin-top:9px">Jeda otomatis aktif: hitungan waktu berhenti sendiri ketika kamu berhenti bergerak lebih dari delapan detik, lalu lanjut lagi begitu kembali melaju. Titik GPS dengan akurasi lebih buruk dari 35 meter dibuang supaya jaraknya tidak melar.</p>'+
+      '<div class="kotak-edit" style="margin-top:11px">🔋 <b>Agar perekaman tidak terputus.</b> Peramban menghentikan GPS begitu layar benar-benar mati — tidak ada aplikasi web yang bisa menembus batas itu. Yang disediakan di sini: layar ditahan tetap menyala selama merekam, dan tombol <b>Redupkan Layar</b> membuat layar hampir hitam sehingga baterai jauh lebih awet namun GPS terus berjalan. Matikan penghemat baterai untuk peramban ini, dan jangan menekan tombol daya.</div>'+
     '</div>';
 
     var akhir=(S.sesi||[])[0];
@@ -1230,6 +1262,8 @@ function viewRekam(){
         '<div class="kecil" id="statusGps">'+lencanaGps()+'</div>'+
         '<button class="b kecilb garis" onclick="toggleIkuti()">'+(ikutiPeta?'📍 Ikuti: nyala':'📍 Ikuti: mati')+'</button>'+
       '</div>'+
+      '<button class="b garis penuh" style="margin-top:10px" onclick="modeRedup()">🌙 Redupkan Layar (hemat baterai)</button>'+
+      '<div id="recJeda">'+ringkasanJedaRec()+'</div>'+
     '</div>';
 
   h2+='<div class="kartu"><div class="grid g2">'+
@@ -1243,6 +1277,39 @@ function viewRekam(){
 
   h2+='<div id="recSplit">'+kartuSplit(rec.split, rec.jarak, rec.bergerakMs/1000, rec.patokanKm, rec.patokanDetik)+'</div>';
   return h2;
+}
+
+/** Peringatan jeda pada layar perekam; kosong bila belum pernah terputus. */
+var splitTerakhir=-1;
+
+/** Memperbarui angka pada baris kilometer yang sedang berjalan. */
+function perbaruiSplitBerjalan(){
+  var km=document.getElementById('spKm'); if(!km) return;
+  var sisaDetik=Math.round(rec.bergerakMs/1000-rec.patokanDetik);
+  km.textContent=rec.jarak.toFixed(2);
+  var pace=document.getElementById('spPace');
+  if(pace) pace.textContent=fmtPace(sisaDetik);
+  var bar=document.getElementById('spBar');
+  if(bar){
+    var maks=1;
+    rec.split.forEach(function(s){ if(n(s.detik)>maks) maks=n(s.detik); });
+    if(!rec.split.length) maks=Math.max(1, sisaDetik);
+    bar.style.width=Math.max(10, Math.min(100, Math.round(sisaDetik/maks*100)))+'%';
+  }
+}
+
+function setBilaBerubah(el, html){
+  if(!el) return;
+  if(el.getAttribute('data-isi')===html) return;
+  el.setAttribute('data-isi', html);
+  el.innerHTML=html;
+}
+
+function ringkasanJedaRec(){
+  if(!rec.jeda.length) return '';
+  return '<div class="peringatan-jeda">⚠️ Perekaman sempat terhenti '+rec.jeda.length+
+    ' kali, total '+fmtDurasi(totalJedaDetik(rec.jeda))+
+    '. Jarak selama jeda itu tidak terekam dan tidak dikarang.</div>';
 }
 
 function labelStatusRec(){
@@ -1284,11 +1351,15 @@ function mulaiRekam(){
   rec.patokanKm=0; rec.patokanDetik=0; rec.patokanNaik=0;
   rec.kecKini=0; rec.kecMaks=0; rec.altTerakhir=null;
   rec.diamSejak=0; rec.autoJeda=false; rec.hrList=[]; rec.peringatanRute=0;
+  rec.jeda=[]; rec.putusBerikut=false; rec.simpanTerakhir=0;
+  splitTerakhir=-1;
 
   mulaiWatch();
   if(idTimerRec) clearInterval(idTimerRec);
   idTimerRec=setInterval(tikRekam, 1000);
   kunciLayar();
+  nyalakanPenjaga();
+  simpanStatusRekam();
   renderPaksa();
   toast('Rekaman dimulai','ok');
 }
@@ -1311,6 +1382,8 @@ function hentikanRekam(){
   if(idWatch!=null){ try{ navigator.geolocation.clearWatch(idWatch); }catch(e){} idWatch=null; }
   if(idTimerRec){ clearInterval(idTimerRec); idTimerRec=null; }
   lepasLayar();
+  matikanPenjaga();
+  keluarRedup();
 }
 
 function buangRekam(){
@@ -1324,7 +1397,9 @@ function resetRekam(){
   rec.naik=0; rec.turun=0; rec.totalMs=0; rec.bergerakMs=0;
   rec.patokanKm=0; rec.patokanDetik=0; rec.patokanNaik=0;
   rec.kecKini=0; rec.kecMaks=0; rec.autoJeda=false; rec.hrList=[];
+  rec.jeda=[]; rec.putusBerikut=false;
   lapisanRec=null; penandaRec=null;
+  hapusStatusRekam();
 }
 
 function selesaiRekam(){
@@ -1378,6 +1453,19 @@ function terimaPosisi(pos){
   }
 
   var dKm = jarakKm(akhir.lat, akhir.lng, la, ln);
+
+  // Setelah halaman dibekukan sistem, titik berikutnya melompat jauh. Jarak
+  // lompatan itu TIDAK ditambahkan: garis lurus antara dua titik bukan jalur
+  // yang benar-benar ditempuh, dan menambahkannya berarti mengarang data.
+  if(rec.putusBerikut){
+    rec.putusBerikut=false;
+    rec.diamSejak=0; rec.altTerakhir=alt; rec.kecKini=0;
+    rec.jejak.push({lat:la, lng:ln, alt:alt, t:Math.round(detik), putus:true});
+    gambarJejakRec();
+    perbaruiTampilanRec();
+    return;
+  }
+
   if(dKm*1000 < 2.5){
     if(!rec.diamSejak) rec.diamSejak=Date.now();
     return;
@@ -1416,12 +1504,43 @@ function tikRekam(){
   rec.tikTerakhir=kini;
   if(rec.status!=='jalan') return;
 
+  // Pencacah ini dijadwalkan tiap detik. Lompatan besar berarti halaman sempat
+  // dibekukan sistem — layar terkunci atau peramban dipindah ke latar belakang.
+  // Selama itu GPS tidak terpantau, jadi rentangnya dicatat sebagai jeda dan
+  // TIDAK dihitung sebagai waktu bergerak.
+  if(dt>5000){
+    catatJedaRekam(kini-dt, dt);
+    rec.totalMs+=dt;
+    rec.putusBerikut=true;
+    rec.diamSejak=0; rec.kecKini=0;
+    perbaruiTampilanRec();
+    simpanStatusRekam(true);
+    return;
+  }
+
   rec.totalMs+=dt;
   if(rec.diamSejak && kini-rec.diamSejak>8000 && !rec.autoJeda){
     rec.autoJeda=true; rec.kecKini=0;
   }
   if(!rec.autoJeda) rec.bergerakMs+=dt;
   perbaruiTampilanRec();
+  perbaruiRedup();
+  simpanStatusRekam();
+}
+
+function catatJedaRekam(mulaiMs, lamaMs){
+  var detik=Math.round(lamaMs/1000);
+  rec.jeda.push({mulai:Math.round((mulaiMs-rec.mulaiMs)/1000), detik:detik});
+  if(rec.jeda.length>50) rec.jeda.shift();
+  setBilaBerubah(document.getElementById('recJeda'), ringkasanJedaRec());
+  toast('Perekaman sempat terhenti '+fmtDurasi(detik)+' karena aplikasi dibekukan sistem','info');
+}
+
+/** Total detik yang hilang karena halaman dibekukan. */
+function totalJedaDetik(daftar){
+  var t=0;
+  (daftar||[]).forEach(function(g){ t+=n(g.detik); });
+  return t;
 }
 
 function periksaSplit(){
@@ -1476,7 +1595,25 @@ function perbaruiTampilanRec(){
       : fmtPace(rec.jarak>0 ? (rec.bergerakMs/1000)/rec.jarak : 0);
   }
   if((e=g('recStatus'))) e.textContent=labelStatusRec();
-  if((e=g('recSplit'))) e.innerHTML=kartuSplit(rec.split, rec.jarak, rec.bergerakMs/1000, rec.patokanKm, rec.patokanDetik);
+
+  // innerHTML hanya ditulis bila isinya benar-benar berubah. Menulis ulang tiap
+  // detik membuat elemen tidak pernah diam: teks tidak bisa disorot, dan tombol
+  // di dekatnya ikut bergeser saat hendak ditekan.
+  setBilaBerubah(g('recJeda'), ringkasanJedaRec());
+  // Kartu split hanya disusun ulang ketika satu kilometer genap bertambah.
+  // Di antara itu, hanya tiga angka pada baris berjalan yang diperbarui —
+  // menulis ulang seluruh kartu tiap detik membuat halaman tidak pernah diam:
+  // teks tidak bisa disorot dan posisi tombol bergeser saat hendak ditekan.
+  var kotakSplit=g('recSplit');
+  if(kotakSplit){
+    if(splitTerakhir!==rec.split.length || !g('spPace')){
+      splitTerakhir=rec.split.length;
+      kotakSplit.innerHTML=kartuSplit(rec.split, rec.jarak, rec.bergerakMs/1000,
+        rec.patokanKm, rec.patokanDetik);
+    } else {
+      perbaruiSplitBerjalan();
+    }
+  }
 
   var stat=document.querySelectorAll('.rekam-utama .stat .nilai');
   if(stat.length>=4){
@@ -1487,16 +1624,216 @@ function perbaruiTampilanRec(){
   }
 }
 
+/* ================================================================
+   MENJAGA PEREKAMAN TETAP HIDUP
+
+   Peramban tidak memiliki API lokasi latar belakang. Begitu layar terkunci,
+   sistem membekukan halaman: pencacah waktu berhenti dan watchPosition tidak
+   lagi memanggil balik. Tidak ada cara menembusnya dari halaman web — itulah
+   sebabnya Strava dan Huawei Health berupa aplikasi native.
+
+   Yang bisa dilakukan, dan dilakukan di sini:
+     1. Wake Lock dipasang ulang setiap halaman kembali terlihat. Sistem selalu
+        melepas kunci layar saat halaman tersembunyi, jadi tanpa pemasangan
+        ulang kunci itu hilang untuk selamanya setelah sekali berpindah aplikasi.
+     2. Mode layar redup: layar tetap menyala (kunci layar tetap sah) tetapi
+        hampir seluruhnya hitam, sehingga pemakaian baterai turun jauh pada
+        layar OLED dan tidak ada yang menyilaukan di dalam saku.
+     3. Nada hening berulang menaikkan prioritas halaman di Android sehingga
+        pembekuan tertunda saat berpindah aplikasi. Ini tidak menolong ketika
+        layar benar-benar terkunci.
+     4. Keadaan rekaman disimpan ke localStorage tiap beberapa detik, sehingga
+        sesi tetap bisa dilanjutkan bila peramban menutup halaman.
+   ================================================================ */
+
+var penjagaAudio=null, pendengarRedup=false;
+
 function kunciLayar(){
+  mintaWakeLock();
+  if(!pendengarRedup){
+    pendengarRedup=true;
+    document.addEventListener('visibilitychange', saatTampilBerubah);
+    window.addEventListener('pageshow', saatTampilBerubah);
+  }
+}
+
+function mintaWakeLock(){
   try{
     if(navigator.wakeLock && navigator.wakeLock.request){
-      navigator.wakeLock.request('screen').then(function(w){ wakeLock=w; }).catch(function(){});
+      navigator.wakeLock.request('screen').then(function(w){
+        wakeLock=w;
+        if(w && w.addEventListener) w.addEventListener('release', function(){ wakeLock=null; });
+      }).catch(function(){ wakeLock=null; });
     }
-  }catch(e){}
+  }catch(e){ wakeLock=null; }
 }
+
+/**
+ * Dipanggil saat halaman kembali terlihat. Dua hal dikerjakan: memasang ulang
+ * kunci layar yang dilepas sistem, dan menghitung lamanya halaman tersembunyi
+ * supaya pembekuan yang tidak sempat tertangkap pencacah tetap tercatat.
+ */
+function saatTampilBerubah(){
+  if(document.visibilityState!=='visible') return;
+  if(!sedangMerekam()) return;
+
+  mintaWakeLock();
+
+  var kini=Date.now();
+  var dt=kini-(rec.tikTerakhir||kini);
+  if(dt>5000 && rec.status==='jalan'){
+    catatJedaRekam(kini-dt, dt);
+    rec.totalMs+=dt;
+    rec.putusBerikut=true;
+    rec.diamSejak=0; rec.kecKini=0;
+  }
+  rec.tikTerakhir=kini;
+
+  // watchPosition kerap mati bersama pembekuan; dipasang ulang agar titik
+  // kembali masuk tanpa pengguna harus menyentuh apa pun.
+  if(rec.status==='jalan') mulaiWatch();
+  perbaruiTampilanRec();
+}
+
+function nyalakanPenjaga(){
+  if(penjagaAudio) return;
+  try{
+    // WAV hening 1 detik; diputar berulang agar Android menganggap halaman
+    // masih aktif dan menunda pembekuan saat berpindah aplikasi.
+    var a=document.createElement('audio');
+    a.loop=true; a.volume=0.001; a.setAttribute('playsinline','');
+    a.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAgD4AAAB9AAACABAAZGF0YQAAAAA=';
+    var janji=a.play();
+    if(janji && janji.catch) janji.catch(function(){});
+    penjagaAudio=a;
+  }catch(e){ penjagaAudio=null; }
+}
+
+function matikanPenjaga(){
+  try{ if(penjagaAudio){ penjagaAudio.pause(); penjagaAudio.src=''; } }catch(e){}
+  penjagaAudio=null;
+}
+
 function lepasLayar(){
   try{ if(wakeLock && wakeLock.release){ wakeLock.release(); } }catch(e){}
   wakeLock=null;
+}
+
+/* ---------------------------------------------------------------- layar redup */
+
+function modeRedup(){
+  if(document.getElementById('layarRedup')) return;
+  document.getElementById('modalHost').insertAdjacentHTML('beforeend',
+    '<div class="redup" id="layarRedup" onclick="keluarRedup()">'+
+      '<div class="r-jam" id="redupJam">'+fmtDurasi(rec.bergerakMs/1000)+'</div>'+
+      '<div class="r-jarak" id="redupJarak">'+rec.jarak.toFixed(2)+'</div>'+
+      '<div class="r-sat">KILOMETER</div>'+
+      '<div class="r-ket"><span class="r-titik"></span>Merekam · ketuk untuk kembali<br>'+
+        'Layar tetap menyala agar GPS terus berjalan</div>'+
+    '</div>');
+  mintaWakeLock();
+  toast('Layar diredupkan, perekaman tetap berjalan','ok');
+}
+
+function keluarRedup(){
+  var el=document.getElementById('layarRedup');
+  if(el && el.parentNode) el.parentNode.removeChild(el);
+}
+
+function perbaruiRedup(){
+  var a=document.getElementById('redupJam'); if(!a) return;
+  a.textContent=fmtDurasi(rec.bergerakMs/1000);
+  var b=document.getElementById('redupJarak');
+  if(b) b.textContent=rec.jarak.toFixed(2);
+}
+
+/* ---------------------------------------------------------------- pemulihan sesi */
+
+/** Menyimpan keadaan rekaman, dibatasi sekali tiap 4 detik agar tidak boros. */
+function simpanStatusRekam(paksa){
+  if(!sedangMerekam()) return;
+  var kini=Date.now();
+  if(!paksa && kini-rec.simpanTerakhir<4000) return;
+  rec.simpanTerakhir=kini;
+  simpan(K.REKAM, {
+    versi:1, disimpanPada:kini,
+    tipe:rec.tipe, ruteId:rec.ruteId, status:rec.status,
+    mulaiMs:rec.mulaiMs, totalMs:rec.totalMs, bergerakMs:rec.bergerakMs,
+    jarak:rec.jarak, naik:rec.naik, turun:rec.turun,
+    jejak:rec.jejak, split:rec.split, jeda:rec.jeda,
+    patokanKm:rec.patokanKm, patokanDetik:rec.patokanDetik, patokanNaik:rec.patokanNaik,
+    kecMaks:rec.kecMaks, hrList:rec.hrList
+  });
+}
+
+function hapusStatusRekam(){
+  try{ localStorage.removeItem(K.REKAM); }catch(e){}
+}
+
+/** Dipanggil sekali saat aplikasi dimuat. Menawarkan melanjutkan sesi tertunda. */
+function periksaRekamTertunda(){
+  var d=baca(K.REKAM, null);
+  if(!d || !d.mulaiMs) return;
+
+  var umurJam=(Date.now()-n(d.disimpanPada))/3600000;
+  if(umurJam>12 || n(d.jarak)<0.03){ hapusStatusRekam(); return; }
+
+  var menit=Math.round(n(d.totalMs)/60000);
+  bukaModal('Lanjutkan Rekaman?',
+    '<p class="kecil">Ada sesi <b>'+esc(d.tipe||'Lari')+'</b> yang belum diselesaikan. '+
+      'Aplikasi kemungkinan ditutup sistem di tengah perekaman.</p>'+
+    '<div class="grid g2" style="margin:12px 0">'+
+      kartuStat('Jarak', n(d.jarak).toFixed(2)+' km')+
+      kartuStat('Waktu', fmtDurasi(n(d.bergerakMs)/1000))+
+    '</div>'+
+    '<p class="kecil">Tercatat '+menit+' menit lalu. Melanjutkan akan meneruskan sesi ini; '+
+      'jarak selama aplikasi tertutup tidak terekam.</p>'+
+    '<button class="b penuh" onclick="lanjutkanRekamTertunda()">Lanjutkan Rekaman</button>'+
+    '<button class="b garis penuh" style="margin-top:9px" onclick="simpanRekamTertunda()">Simpan Apa Adanya</button>'+
+    '<button class="b garis penuh" style="margin-top:9px" onclick="tutupModal(); hapusStatusRekam()">Buang</button>'
+  );
+}
+
+function muatKeRec(d){
+  rec.tipe=d.tipe||'Lari'; rec.ruteId=d.ruteId||'';
+  rec.mulaiMs=n(d.mulaiMs); rec.totalMs=n(d.totalMs); rec.bergerakMs=n(d.bergerakMs);
+  rec.jarak=n(d.jarak); rec.naik=n(d.naik); rec.turun=n(d.turun);
+  rec.jejak=d.jejak||[]; rec.split=d.split||[]; rec.jeda=d.jeda||[];
+  rec.patokanKm=n(d.patokanKm); rec.patokanDetik=n(d.patokanDetik); rec.patokanNaik=n(d.patokanNaik);
+  rec.kecMaks=n(d.kecMaks); rec.hrList=d.hrList||[];
+  rec.kecKini=0; rec.diamSejak=0; rec.autoJeda=false; rec.altTerakhir=null;
+}
+
+function lanjutkanRekamTertunda(){
+  var d=baca(K.REKAM, null); if(!d) return tutupModal();
+  tutupModal();
+  muatKeRec(d);
+
+  // Waktu sejak penyimpanan terakhir dicatat sebagai jeda, bukan waktu bergerak.
+  var hilang=Date.now()-n(d.disimpanPada);
+  if(hilang>5000){
+    rec.totalMs+=hilang;
+    rec.jeda.push({mulai:Math.round((n(d.disimpanPada)-rec.mulaiMs)/1000), detik:Math.round(hilang/1000)});
+  }
+  rec.putusBerikut=true;
+  rec.status='jalan'; rec.tikTerakhir=Date.now();
+
+  mulaiWatch();
+  if(idTimerRec) clearInterval(idTimerRec);
+  idTimerRec=setInterval(tikRekam, 1000);
+  kunciLayar(); nyalakanPenjaga();
+  tab='peta'; subPeta='rekam';
+  renderPaksa();
+  toast('Rekaman dilanjutkan · '+fmtDurasi(totalJedaDetik(rec.jeda))+' tidak terekam','info');
+}
+
+function simpanRekamTertunda(){
+  var d=baca(K.REKAM, null); if(!d) return tutupModal();
+  tutupModal();
+  muatKeRec(d);
+  rec.status='selesai';
+  tab='peta'; subPeta='rekam';
+  modalSimpanSesi();
 }
 
 /* ---------------------------------------------------------------- peta rekam */
@@ -1536,11 +1873,29 @@ function pasangPetaRekam(){
   });
 }
 
+/**
+ * Memecah jejak menjadi beberapa ruas pada titik yang ditandai putus, yaitu
+ * titik pertama setelah halaman dibekukan sistem. Menggambar satu garis lurus
+ * menembus celah itu akan menampilkan jalur yang tidak pernah ditempuh.
+ */
+function ruasJejak(jejak){
+  var ruas=[], kini=[];
+  (jejak||[]).forEach(function(t){
+    if(t.putus && kini.length){ ruas.push(kini); kini=[]; }
+    kini.push([n(t.lat), n(t.lng)]);
+  });
+  if(kini.length) ruas.push(kini);
+  return ruas.filter(function(r){ return r.length>1; });
+}
+
 function gambarJejakRec(){
   if(!petaObj || !window.L || rec.jejak.length<2) return;
-  var ll=rec.jejak.map(function(t){ return [t.lat,t.lng]; });
   if(lapisanRec) petaObj.removeLayer(lapisanRec);
-  lapisanRec=L.polyline(ll,{color:'#fc5200', weight:5, opacity:.92}).addTo(petaObj);
+  var ruas=ruasJejak(rec.jejak);
+  if(!ruas.length) return;
+  lapisanRec=L.layerGroup(ruas.map(function(r){
+    return L.polyline(r,{color:'#fc5200', weight:5, opacity:.92});
+  })).addTo(petaObj);
 }
 
 /* ---------------------------------------------------------------- simpan sesi */
@@ -1563,6 +1918,11 @@ function modalSimpanSesi(){
         rec.tipe==='Bersepeda' ? (rec.jarak/(detik/3600)||0).toFixed(1)+' km/j' : fmtPace(pace))+
       kartuStat('Kalori', rb(kalRec()))+
     '</div>'+
+    (rec.jeda.length
+      ? '<div class="peringatan-jeda" style="margin-bottom:12px">⚠️ Perekaman terhenti '+rec.jeda.length+
+        ' kali (total '+fmtDurasi(totalJedaDetik(rec.jeda))+') karena aplikasi dibekukan sistem. '+
+        'Jarak selama jeda itu tidak ikut terhitung.</div>'
+      : '')+
     '<div class="ruas"><label class="f">Judul</label>'+
       '<input id="ssJudul" value="'+esc(judulOtomatis(rec.tipe))+'"></div>'+
     '<div class="ruas"><label class="f">Catatan</label>'+
@@ -1595,7 +1955,7 @@ function simpanSesi(){
     kecepatanMaks:Math.round(rec.kecMaks*10)/10,
     hrRata: rec.hrList.length ? Math.round(rec.hrList.reduce(function(a,b){return a+b;},0)/rec.hrList.length) : 0,
     hrMaks: rec.hrList.length ? Math.max.apply(null, rec.hrList) : 0,
-    jejak:jejak, split:split,
+    jejak:jejak, split:split, jeda:rec.jeda.slice(),
     catatan:(document.getElementById('ssCatat').value||'').trim()
   };
 
@@ -1604,7 +1964,7 @@ function simpanSesi(){
     elapsedSeconds:s.durasiDetik, movingSeconds:s.bergerakDetik, distanceKm:s.jarakKm,
     elevGain:s.elevasiNaik, elevLoss:s.elevasiTurun, calories:s.kalori, avgPace:s.paceRata,
     maxSpeed:s.kecepatanMaks, avgHr:s.hrRata, maxHr:s.hrMaks,
-    track:jejak, splits:split, notes:s.catatan
+    track:jejak, splits:split, notes:s.catatan, gaps:s.jeda
   };
 
   tutupModal();
@@ -1645,6 +2005,10 @@ function sederhanakanJejak(jejak, eps){
     if(acuan===null || Math.abs(a-acuan)>=3){ simpan[i]=true; acuan=a; }
   }
 
+  // Titik penanda putus wajib bertahan: ia yang memberi tahu peta dan kartu
+  // bagikan di mana jejak harus dipotong, bukan disambung.
+  for(var q=0;q<kerja.length;q++) if(kerja[q] && kerja[q].putus) simpan[q]=true;
+
   var hasil=[];
   for(var k=0;k<kerja.length;k++) if(simpan[k]) hasil.push(kerja[k]);
   if(hasil.length>400) hasil=jarangkan(hasil, 400);
@@ -1653,9 +2017,19 @@ function sederhanakanJejak(jejak, eps){
 
 function jarangkan(a, maks){
   if(a.length<=maks) return a.slice();
-  var langkah=a.length/(maks-1), out=[];
-  for(var i=0;i<maks-1;i++) out.push(a[Math.floor(i*langkah)]);
-  out.push(a[a.length-1]);
+
+  // Titik putus tidak boleh ikut terbuang saat penjarangan.
+  var wajib={};
+  for(var w=0;w<a.length;w++) if(a[w] && a[w].putus) wajib[w]=true;
+  wajib[0]=true; wajib[a.length-1]=true;
+
+  var sisa=maks-Object.keys(wajib).length;
+  if(sisa>0){
+    var langkah=a.length/(sisa+1);
+    for(var i=1;i<=sisa;i++) wajib[Math.floor(i*langkah)]=true;
+  }
+  var out=[];
+  for(var k=0;k<a.length;k++) if(wajib[k]) out.push(a[k]);
   return out;
 }
 
@@ -1771,6 +2145,11 @@ function viewDetailSesi(s){
       (n(s.avgHr) ? '<div class="grid g2" style="margin-top:9px">'+
         kartuStat('Detak rata²', n(s.avgHr)+' bpm')+
         kartuStat('Detak maks', n(s.maxHr)+' bpm')+'</div>' : '')+
+      ((s.gaps||[]).length
+        ? '<div class="peringatan-jeda">⚠️ Perekaman terhenti '+s.gaps.length+' kali, total '+
+          fmtDurasi(totalJedaDetik(s.gaps))+'. Jarak selama rentang itu tidak terekam, '+
+          'jadi angka jarak di atas kemungkinan lebih kecil dari yang sebenarnya ditempuh.</div>'
+        : '')+
       (s.notes ? '<p class="kecil" style="margin-top:10px">📝 '+esc(s.notes)+'</p>' : '')+
     '</div>';
 
@@ -1778,6 +2157,7 @@ function viewDetailSesi(s){
   h+=kartuElevasi(s.track);
 
   h+='<div class="kartu"><div class="baris wrap" style="gap:8px">'+
+      '<button class="b jingga" onclick="modalKartuBagi(\''+jsq(s.id)+'\')">🖼️ Kartu Media Sosial</button>'+
       '<button class="b garis" onclick="bagikanSesi(\''+jsq(s.id)+'\')">📣 Bagikan ke Komunitas</button>'+
       '<button class="b garis" onclick="jadwalkanUlangSesi(\''+jsq(s.id)+'\')">📅 Jadwalkan Lagi</button>'+
       '<button class="b garis" onclick="simpanSebagaiRute(\''+jsq(s.id)+'\')">🗺️ Simpan Jadi Rute</button>'+
@@ -1810,8 +2190,17 @@ function pasangPetaSesi(){
       petaObj=L.map(el,{zoomControl:true}).setView(tk[0], 15);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
         {maxZoom:19, attribution:'© OpenStreetMap'}).addTo(petaObj);
-      var garis=L.polyline(tk,{color:'#fc5200', weight:5, opacity:.9}).addTo(petaObj);
-      petaObj.fitBounds(garis.getBounds(),{padding:[26,26]});
+      var ruas=ruasJejak(s.track||[]);
+      var grup=L.layerGroup(ruas.map(function(r){
+        return L.polyline(r,{color:'#fc5200', weight:5, opacity:.9});
+      })).addTo(petaObj);
+      petaObj.fitBounds(L.latLngBounds(tk),{padding:[26,26]});
+      // Celah antar-ruas digambar putus-putus agar jelas bahwa bagian itu
+      // tidak terekam, bukan jalur yang benar-benar ditempuh.
+      for(var ri=1; ri<ruas.length; ri++){
+        var a=ruas[ri-1][ruas[ri-1].length-1], b=ruas[ri][0];
+        L.polyline([a,b],{color:'#94a3b8', weight:3, opacity:.8, dashArray:'6 7'}).addTo(grup);
+      }
       L.circleMarker(tk[0],{radius:7, color:'#fff', weight:3, fillColor:'#22c55e', fillOpacity:1})
         .addTo(petaObj).bindPopup('Start');
       L.circleMarker(tk[tk.length-1],{radius:7, color:'#fff', weight:3, fillColor:'#ef4444', fillOpacity:1})
@@ -1848,10 +2237,15 @@ function kartuSplit(splits, jarakKini, detikKini, patokanKm, patokanDetik){
     daftar.map(function(s){
       var lebar=Math.max(10, Math.min(100, Math.round(n(s.detik)/maks*100)));
       var kelas = s.sebagian ? 'sebagian' : ((penuh.length>1 && n(s.detik)===min) ? 'tercepat' : '');
+      // Baris kilometer berjalan diberi id supaya angkanya bisa diperbarui
+      // tiap detik tanpa menyusun ulang seluruh kartu.
+      var id = s.sebagian ? ' id="spKm"' : '';
+      var idB = s.sebagian ? ' id="spBar"' : '';
+      var idP = s.sebagian ? ' id="spPace"' : '';
       return '<div class="split-baris">'+
-        '<div class="split-km">'+(s.sebagian ? n(s.km).toFixed(2) : n(s.km))+'</div>'+
-        '<div class="split-bar"><i class="'+kelas+'" style="width:'+lebar+'%"></i></div>'+
-        '<div class="split-pace">'+fmtPace(s.detik)+'</div>'+
+        '<div class="split-km"'+id+'>'+(s.sebagian ? n(s.km).toFixed(2) : n(s.km))+'</div>'+
+        '<div class="split-bar"><i class="'+kelas+'"'+idB+' style="width:'+lebar+'%"></i></div>'+
+        '<div class="split-pace"'+idP+'>'+fmtPace(s.detik)+'</div>'+
         '<div class="split-elev">'+(n(s.naik) ? '+'+n(s.naik)+' m' : '—')+'</div>'+
       '</div>';
     }).join('')+
@@ -1988,6 +2382,395 @@ function bagikanSesi(id){
   };
   ubah('komunitas_post', post, function(){ S.komunitas=S.komunitas||[]; S.komunitas.push(post); });
   toast('Aktivitas dibagikan ke Komunitas','ok');
+}
+
+/* ================================================================
+   KARTU BAGIKAN MEDIA SOSIAL — mengikuti pola Huawei Health
+
+   Pola yang ditiru: satu kartu potret, jejak rute sebagai elemen utama,
+   satu angka besar yang mendominasi (jarak), tiga metrik pendukung sebaris,
+   label waktu, dan tanda aplikasi di kaki kartu. Kartu digambar di atas
+   canvas lalu dibagikan lewat Web Share API, atau diunduh bila peramban
+   tidak mendukungnya.
+   ================================================================ */
+
+var TEMA_BAGI = {
+  malam:  {nama:'Malam',  kelas:'t-malam',
+           latar:['#0f172a','#1e3a5f'], teks:'#ffffff', redup:'rgba(255,255,255,.62)',
+           jalur:'#38bdf8', aksen:'#38bdf8'},
+  jingga: {nama:'Jingga', kelas:'t-jingga',
+           latar:['#fc5200','#f59e0b'], teks:'#ffffff', redup:'rgba(255,255,255,.78)',
+           jalur:'#ffffff', aksen:'#ffffff'},
+  hutan:  {nama:'Hutan',  kelas:'t-hutan',
+           latar:['#064e3b','#059669'], teks:'#ffffff', redup:'rgba(255,255,255,.7)',
+           jalur:'#a7f3d0', aksen:'#a7f3d0'},
+  terang: {nama:'Terang', kelas:'t-terang',
+           latar:['#f8fafc','#e2e8f0'], teks:'#0f172a', redup:'rgba(15,23,42,.58)',
+           jalur:'#059669', aksen:'#059669'},
+  foto:   {nama:'Foto',   kelas:'t-foto',
+           latar:['#334155','#64748b'], teks:'#ffffff', redup:'rgba(255,255,255,.72)',
+           jalur:'#ffffff', aksen:'#ffffff', perluFoto:true}
+};
+
+var bagiSesi=null, bagiTema='malam', bagiFoto=null, bagiBlob=null;
+
+function modalKartuBagi(id){
+  var s=(S.sesi||[]).filter(function(x){ return x.id===id; })[0];
+  if(!s) return;
+  bagiSesi=s; bagiTema='malam'; bagiFoto=null; bagiBlob=null;
+
+  bukaModal('Kartu Media Sosial',
+    '<div class="bagi-tema" style="margin-bottom:12px">'+
+      Object.keys(TEMA_BAGI).map(function(k){
+        return '<button class="'+TEMA_BAGI[k].kelas+(k===bagiTema?' aktif':'')+'" '+
+          'data-tema="'+k+'" onclick="pilihTemaBagi(\''+k+'\')">'+esc(TEMA_BAGI[k].nama)+'</button>';
+      }).join('')+
+    '</div>'+
+    '<canvas id="kanvasBagi" class="bagi-pratinjau" width="1080" height="1920"></canvas>'+
+    '<div class="baris wrap" style="gap:8px; margin-top:13px; justify-content:center">'+
+      '<label class="b kecilb garis" style="cursor:pointer">🖼️ Foto Latar'+
+        '<input type="file" accept="image/*" style="display:none" onchange="pilihFotoBagi(this)"></label>'+
+      (bagiFoto ? '' : '')+
+      '<button class="b kecilb garis" onclick="hapusFotoBagi()">Tanpa Foto</button>'+
+    '</div>'+
+    '<button class="b penuh" style="margin-top:12px" onclick="bagikanKartu()">📤 Bagikan</button>'+
+    '<button class="b garis penuh" style="margin-top:9px" onclick="unduhKartu()">⬇️ Simpan Gambar</button>'+
+    '<button class="b garis penuh" style="margin-top:9px" onclick="salinKeteranganBagi()">📋 Salin Keterangan</button>'+
+    '<p class="kecil" style="margin-top:10px">Kartu berukuran 1080 × 1920, pas untuk Status WhatsApp, Instagram Story, dan Facebook Story. Untuk unggahan biasa, gambar yang sama tetap terbaca baik.</p>'
+  );
+  setTimeout(function(){ gambarKartuBagi(); }, 60);
+}
+
+function pilihTemaBagi(k){
+  bagiTema=k; bagiBlob=null;
+  var b=document.querySelectorAll('.bagi-tema button');
+  for(var i=0;i<b.length;i++) b[i].classList.toggle('aktif', b[i].getAttribute('data-tema')===k);
+  if(TEMA_BAGI[k].perluFoto && !bagiFoto){
+    toast('Pilih foto latar agar tema ini tampil penuh','info');
+  }
+  gambarKartuBagi();
+}
+
+function pilihFotoBagi(input){
+  var file=input.files && input.files[0];
+  input.value='';
+  if(!file) return;
+  kecilkanGambar(file, 1200, function(b64){
+    var img=new Image();
+    img.onload=function(){ bagiFoto=img; bagiBlob=null; bagiTema='foto'; pilihTemaBagi('foto'); };
+    img.onerror=function(){ toast('Foto tidak dapat dibaca','err'); };
+    img.src='data:image/jpeg;base64,'+b64;
+  });
+}
+
+function hapusFotoBagi(){
+  bagiFoto=null; bagiBlob=null;
+  if(bagiTema==='foto') bagiTema='malam';
+  pilihTemaBagi(bagiTema);
+}
+
+/* ---------------- menggambar kartu ---------------- */
+
+function gambarKartuBagi(){
+  var c=document.getElementById('kanvasBagi'); if(!c || !bagiSesi) return;
+  var x=c.getContext('2d');
+  var W=c.width, H=c.height, s=bagiSesi, T=TEMA_BAGI[bagiTema]||TEMA_BAGI.malam;
+
+  /* latar */
+  if(T.perluFoto && bagiFoto){
+    gambarFotoPenuh(x, bagiFoto, W, H);
+    var g=x.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,'rgba(0,0,0,.52)');
+    g.addColorStop(.45,'rgba(0,0,0,.28)');
+    g.addColorStop(1,'rgba(0,0,0,.78)');
+    x.fillStyle=g; x.fillRect(0,0,W,H);
+  } else {
+    var gl=x.createLinearGradient(0,0,W*.4,H);
+    gl.addColorStop(0,T.latar[0]); gl.addColorStop(1,T.latar[1]);
+    x.fillStyle=gl; x.fillRect(0,0,W,H);
+    if(bagiFoto){
+      x.save(); x.globalAlpha=.3; gambarFotoPenuh(x, bagiFoto, W, H); x.restore();
+    }
+  }
+
+  var M=86;
+  x.textBaseline='alphabetic';
+
+  /* kepala: jenis olahraga + tanggal */
+  x.fillStyle=T.teks;
+  x.font='700 42px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+  x.textAlign='left';
+  x.fillText(labelOlahraga(s.type), M, 150);
+
+  x.fillStyle=T.redup;
+  x.font='500 34px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+  x.fillText(tanggalPanjang(s.date)+' · '+(s.time||''), M, 204);
+
+  /* angka utama: jarak */
+  x.fillStyle=T.teks;
+  x.textAlign='left';
+  x.font='800 230px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+  var jarakTeks=n(s.distanceKm).toFixed(2);
+  x.fillText(jarakTeks, M-8, 470);
+
+  var lebarJarak=x.measureText(jarakTeks).width;
+  x.fillStyle=T.redup;
+  x.font='700 46px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+  x.fillText('km', M+lebarJarak+6, 470);
+
+  x.fillStyle=T.redup;
+  x.font='600 32px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+  x.fillText('JARAK TEMPUH', M, 524);
+
+  /* jalur rute */
+  var kotak={x:M, y:596, w:W-M*2, h:520};
+  var adaJalur=gambarJalurKanvas(x, s, kotak, T);
+  if(!adaJalur){
+    x.fillStyle=T.redup;
+    x.font='500 34px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+    x.textAlign='center';
+    x.fillText('Sesi ini tidak menyimpan jejak GPS', W/2, kotak.y+kotak.h/2);
+    x.textAlign='left';
+  }
+
+  /* tiga metrik pendukung */
+  var laju = s.type==='Bersepeda'
+    ? ((n(s.distanceKm)/(n(s.movingSeconds)/3600))||0).toFixed(1)
+    : fmtPace(s.avgPace);
+  var labelLaju = s.type==='Bersepeda' ? 'KM/JAM' : 'PACE /KM';
+
+  var metrik=[
+    [fmtDurasi(s.movingSeconds), 'DURASI'],
+    [laju, labelLaju],
+    [String(rb(s.calories)), 'KALORI']
+  ];
+  var yM=1330;
+  var lebarKolom=(W-M*2)/3;
+  x.textAlign='center';
+  metrik.forEach(function(m,i){
+    var cx=M+lebarKolom*i+lebarKolom/2;
+    x.fillStyle=T.teks;
+    x.font='800 76px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+    x.fillText(m[0], cx, yM);
+    x.fillStyle=T.redup;
+    x.font='600 28px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+    x.fillText(m[1], cx, yM+46);
+  });
+
+  /* baris kedua: elevasi & detak bila ada */
+  var tambahan=[];
+  if(n(s.elevGain)) tambahan.push(['+'+n(s.elevGain)+' m','ELEVASI']);
+  if(n(s.avgHr)) tambahan.push([n(s.avgHr)+' bpm','DETAK RATA²']);
+  if((s.gaps||[]).length) tambahan.push([fmtDurasi(totalJedaDetik(s.gaps)),'TIDAK TEREKAM']);
+  if(tambahan.length){
+    var yT=1470, lk=(W-M*2)/tambahan.length;
+    tambahan.forEach(function(m,i){
+      var cx=M+lk*i+lk/2;
+      x.fillStyle=T.teks;
+      x.font='700 48px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+      x.fillText(m[0], cx, yT);
+      x.fillStyle=T.redup;
+      x.font='600 25px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+      x.fillText(m[1], cx, yT+40);
+    });
+  }
+
+  /* garis pemisah + kaki kartu */
+  x.strokeStyle=T.redup; x.globalAlpha=.35;
+  x.lineWidth=2; x.beginPath(); x.moveTo(M,1620); x.lineTo(W-M,1620); x.stroke();
+  x.globalAlpha=1;
+
+  x.textAlign='left';
+  x.fillStyle=T.teks;
+  x.font='700 40px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+  x.fillText(((S.profil||{}).name)||'NutriFit ID', M, 1708);
+
+  x.fillStyle=T.redup;
+  x.font='500 30px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+  x.fillText(esc(s.title||s.type).replace(/&[a-z#0-9]+;/g,''), M, 1756);
+
+  x.textAlign='right';
+  x.fillStyle=T.aksen;
+  x.font='800 36px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+  x.fillText('NutriFit ID', W-M, 1708);
+  x.fillStyle=T.redup;
+  x.font='500 26px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+  x.fillText('Direkam dengan GPS', W-M, 1752);
+  x.textAlign='left';
+}
+
+/** Menggambar foto menutupi seluruh kanvas tanpa menggepengkan rasio. */
+function gambarFotoPenuh(x, img, W, H){
+  var r=Math.max(W/img.width, H/img.height);
+  var w=img.width*r, h=img.height*r;
+  x.drawImage(img, (W-w)/2, (H-h)/2, w, h);
+}
+
+/**
+ * Menggambar jejak GPS di dalam kotak yang diberikan. Ruas yang terputus
+ * digambar terpisah, dan celahnya putus-putus, sama seperti di peta.
+ */
+function gambarJalurKanvas(x, s, kotak, T){
+  var ruas=ruasJejak(s.track||[]);
+  if(!ruas.length) return false;
+
+  var semua=[];
+  ruas.forEach(function(r){ r.forEach(function(t){ semua.push(t); }); });
+
+  var laMin=1e9, laMaks=-1e9, lnMin=1e9, lnMaks=-1e9;
+  semua.forEach(function(t){
+    if(t[0]<laMin) laMin=t[0]; if(t[0]>laMaks) laMaks=t[0];
+    if(t[1]<lnMin) lnMin=t[1]; if(t[1]>lnMaks) lnMaks=t[1];
+  });
+
+  // Bujur dimampatkan sesuai lintang supaya bentuk jalur tidak melar
+  // ke samping — satu derajat bujur lebih pendek daripada satu derajat lintang.
+  var kosLat=Math.cos((laMin+laMaks)/2*Math.PI/180) || 1;
+  var lebarGeo=Math.max((lnMaks-lnMin)*kosLat, 1e-7);
+  var tinggiGeo=Math.max(laMaks-laMin, 1e-7);
+  var skala=Math.min(kotak.w/lebarGeo, kotak.h/tinggiGeo);
+  var offX=kotak.x+(kotak.w-lebarGeo*skala)/2;
+  var offY=kotak.y+(kotak.h-tinggiGeo*skala)/2;
+
+  function ke(t){
+    return [offX+(t[1]-lnMin)*kosLat*skala,
+            offY+(laMaks-t[0])*skala];   // lintang dibalik: utara di atas
+  }
+
+  x.save();
+  x.lineJoin='round'; x.lineCap='round';
+
+  // celah antar-ruas
+  x.strokeStyle=T.redup; x.lineWidth=5; x.setLineDash([14,16]);
+  for(var i=1;i<ruas.length;i++){
+    var a=ke(ruas[i-1][ruas[i-1].length-1]), b=ke(ruas[i][0]);
+    x.beginPath(); x.moveTo(a[0],a[1]); x.lineTo(b[0],b[1]); x.stroke();
+  }
+  x.setLineDash([]);
+
+  // bayangan tipis agar jalur terbaca di atas foto apa pun
+  x.strokeStyle='rgba(0,0,0,.28)'; x.lineWidth=18;
+  ruas.forEach(function(r){
+    x.beginPath();
+    r.forEach(function(t,j){ var p=ke(t); if(j===0) x.moveTo(p[0],p[1]); else x.lineTo(p[0],p[1]); });
+    x.stroke();
+  });
+
+  x.strokeStyle=T.jalur; x.lineWidth=11;
+  ruas.forEach(function(r){
+    x.beginPath();
+    r.forEach(function(t,j){ var p=ke(t); if(j===0) x.moveTo(p[0],p[1]); else x.lineTo(p[0],p[1]); });
+    x.stroke();
+  });
+
+  // penanda start dan finish
+  var awal=ke(ruas[0][0]);
+  var ujungRuas=ruas[ruas.length-1];
+  var akhir=ke(ujungRuas[ujungRuas.length-1]);
+  [[awal,'#22c55e'],[akhir,'#ef4444']].forEach(function(t){
+    x.beginPath(); x.arc(t[0][0], t[0][1], 20, 0, Math.PI*2);
+    x.fillStyle=t[1]; x.fill();
+    x.lineWidth=7; x.strokeStyle='#ffffff'; x.stroke();
+  });
+
+  x.restore();
+  return true;
+}
+
+function labelOlahraga(t){
+  if(t==='Bersepeda') return 'Bersepeda';
+  if(t==='Jalan Kaki') return 'Jalan Kaki';
+  return 'Lari';
+}
+
+function tanggalPanjang(tgl){
+  var B=['Januari','Februari','Maret','April','Mei','Juni','Juli',
+         'Agustus','September','Oktober','November','Desember'];
+  var p=String(tgl||'').split('-');
+  if(p.length!==3) return String(tgl||'');
+  return n(p[2])+' '+B[Math.max(0,Math.min(11,n(p[1])-1))]+' '+p[0];
+}
+
+/* ---------------- membagikan & menyimpan ---------------- */
+
+function kanvasKeBlob(cb){
+  var c=document.getElementById('kanvasBagi');
+  if(!c) return cb(null);
+  if(bagiBlob) return cb(bagiBlob);
+  if(c.toBlob){
+    c.toBlob(function(b){ bagiBlob=b; cb(b); }, 'image/jpeg', 0.92);
+  } else {
+    try{
+      var d=c.toDataURL('image/jpeg',0.92).split(',')[1];
+      var bin=atob(d), arr=new Uint8Array(bin.length);
+      for(var i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+      bagiBlob=new Blob([arr],{type:'image/jpeg'});
+      cb(bagiBlob);
+    }catch(e){ cb(null); }
+  }
+}
+
+function namaBerkasBagi(){
+  var s=bagiSesi||{};
+  return 'nutrifit-'+String(s.date||'').replace(/-/g,'')+'-'+
+         n(s.distanceKm).toFixed(2).replace('.','')+'km.jpg';
+}
+
+function keteranganBagi(){
+  var s=bagiSesi; if(!s) return '';
+  var laju = s.type==='Bersepeda'
+    ? ((n(s.distanceKm)/(n(s.movingSeconds)/3600))||0).toFixed(1)+' km/jam'
+    : fmtPace(s.avgPace)+' /km';
+  return labelOlahraga(s.type)+' '+n(s.distanceKm).toFixed(2)+' km dalam '+
+    fmtDurasi(s.movingSeconds)+' (pace '+laju+'), '+rb(s.calories)+' kkal'+
+    (n(s.elevGain) ? ', elevasi +'+n(s.elevGain)+' m' : '')+'. '+
+    tanggalPanjang(s.date)+'. #NutriFitID';
+}
+
+function bagikanKartu(){
+  kanvasKeBlob(function(b){
+    if(!b) return toast('Gambar gagal dibuat','err');
+    var berkas=null;
+    try{ berkas=new File([b], namaBerkasBagi(), {type:'image/jpeg'}); }catch(e){}
+
+    if(berkas && navigator.share && navigator.canShare && navigator.canShare({files:[berkas]})){
+      navigator.share({files:[berkas], text:keteranganBagi()})
+        .then(function(){ toast('Kartu dibagikan','ok'); })
+        .catch(function(e){
+          if(e && e.name==='AbortError') return;
+          unduhKartu();
+        });
+      return;
+    }
+    // Peramban tanpa berbagi berkas: gambar disimpan supaya bisa diunggah manual.
+    toast('Peramban ini belum bisa membagikan berkas langsung — gambar disimpan','info');
+    unduhKartu();
+  });
+}
+
+function unduhKartu(){
+  kanvasKeBlob(function(b){
+    if(!b) return toast('Gambar gagal dibuat','err');
+    try{
+      var u=URL.createObjectURL(b);
+      var a=document.createElement('a');
+      a.href=u; a.download=namaBerkasBagi();
+      document.body.appendChild(a); a.click();
+      setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(u); }, 1500);
+      toast('Gambar tersimpan','ok');
+    }catch(e){ toast('Gagal menyimpan gambar','err'); }
+  });
+}
+
+function salinKeteranganBagi(){
+  var teks=keteranganBagi();
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(teks)
+      .then(function(){ toast('Keterangan disalin','ok'); })
+      .catch(function(){ toast('Gagal menyalin','err'); });
+  } else {
+    toast('Peramban ini tidak mendukung salin otomatis','info');
+  }
 }
 
 function jadwalkanUlangSesi(id){
@@ -3820,25 +4603,6 @@ document.getElementById('btnProfil').onclick=modalProfil;
 
 window.addEventListener('beforeunload', function(){ hentikanKamera(); });
 
-/* ---------- pemasangan PWA (khusus GitHub Pages) ---------- */
-var promptPasang=null;
-window.addEventListener('beforeinstallprompt', function(e){
-  e.preventDefault(); promptPasang=e;
-  var b=document.getElementById('btnPasang'); if(b) b.classList.remove('sembunyi');
-});
-(function(){
-  var b=document.getElementById('btnPasang');
-  if(b) b.onclick=function(){
-    if(!promptPasang) return toast('Gunakan menu peramban > "Tambahkan ke layar utama"','info');
-    promptPasang.prompt();
-    promptPasang.userChoice.then(function(r){
-      if(r.outcome==='accepted') toast('NutriFit ID terpasang di perangkatmu','ok');
-      promptPasang=null; b.classList.add('sembunyi');
-    });
-  };
-})();
-window.addEventListener('appinstalled', function(){ toast('Aplikasi terpasang','ok'); });
-
 (function mulai(){
   setTema(baca(K.TEMA,'terang'));
   pantauKoneksi();
@@ -3846,6 +4610,16 @@ window.addEventListener('appinstalled', function(){ toast('Aplikasi terpasang','
   muatData(true).then(function(){
     if(baca(K.ANTREAN,[]).length) sinkronAntrean();
     if('Notification' in window && Notification.permission==='granted') pasangPengingat();
+    // Ditawarkan setelah data siap, supaya rute dan profil sudah tersedia.
+    setTimeout(periksaRekamTertunda, 600);
+  });
+
+  /* Kesempatan terakhir menyimpan keadaan sebelum halaman ditutup sistem. */
+  window.addEventListener('pagehide', function(){ if(sedangMerekam()) simpanStatusRekam(true); });
+  window.addEventListener('beforeunload', function(e){
+    if(!sedangMerekam()) return;
+    simpanStatusRekam(true);
+    e.preventDefault(); e.returnValue='';
   });
   /* segarkan data tiap 5 menit saat online */
   setInterval(function(){ if(online && !document.hidden) muatData(true); }, 300000);
